@@ -14,14 +14,14 @@ type Result struct {
 }
 
 const (
-	testrecords = 1000
-	dimsize     = 128
+	testrecords = 10
+	dimsize     = 5
 )
 
 func Search(h *Hnsw, q []float32) []Result {
 	const (
 		cfgEfSearch = 2000
-		cfgK        = 1000
+		cfgK        = 50
 	)
 
 	ret := make([]Result, cfgK)
@@ -77,6 +77,7 @@ func TestSimple(t *testing.T) {
 	}
 
 	res := Search(h, q)
+	//t.Logf("%s\n%s\n%v\n", h.Print(), h.Stats(), res)
 
 	cupaloy.SnapshotT(t, h.Print(), h.Stats(), res)
 }
@@ -85,15 +86,32 @@ func TestSkip(t *testing.T) {
 	h := newHnsw()
 	q, vecs := getTestdata(t)
 
-	count := 1
 	for i, v := range vecs {
-		if i != 500 {
-			h.Add(v, uint32(count))
-			count++
+		if i != 5 {
+			h.Add(v, uint32(i+1))
 		}
 	}
 
 	res := Search(h, q)
+	//t.Logf("%s\n%s\n%v\n", h.Print(), h.Stats(), res)
+
+	cupaloy.SnapshotT(t, h.Print(), h.Stats(), res)
+}
+
+func TestRemove(t *testing.T) {
+	h := newHnsw()
+	q, vecs := getTestdata(t)
+
+	count := 1
+	for _, v := range vecs {
+		h.Add(v, uint32(count))
+		count++
+	}
+
+	h.Remove(6)
+
+	res := Search(h, q)
+	//t.Logf("%s\n%s\n%v\n", h.Print(), h.Stats(), res)
 
 	cupaloy.SnapshotT(t, h.Print(), h.Stats(), res)
 }
