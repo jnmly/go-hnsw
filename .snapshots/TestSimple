@@ -409,10 +409,6 @@ Memory use for index: 4736 (avg 473 bytes / point)
     Distance: (float32) 103751
   },
   (hnsw.Result) {
-    ID: (uint32) 9,
-    Distance: (float32) 117153
-  },
-  (hnsw.Result) {
     ID: (uint32) 5,
     Distance: (float32) 119561
   },
@@ -429,12 +425,16 @@ Memory use for index: 4736 (avg 473 bytes / point)
     Distance: (float32) 190414
   },
   (hnsw.Result) {
-    ID: (uint32) 8,
-    Distance: (float32) 202068
-  },
-  (hnsw.Result) {
     ID: (uint32) 3,
     Distance: (float32) 209926
+  },
+  (hnsw.Result) {
+    ID: (uint32) 9,
+    Distance: (float32) +Inf
+  },
+  (hnsw.Result) {
+    ID: (uint32) 8,
+    Distance: (float32) +Inf
   },
   (hnsw.Result) {
     ID: (uint32) 0,
