@@ -13,15 +13,20 @@ type Result struct {
 	Distance float32
 }
 
+const (
+	testrecords = 1000
+	dimsize     = 128
+)
+
 func Search(h *Hnsw, q []float32) []Result {
 	const (
 		cfgEfSearch = 2000
-		cfgK        = 5
+		cfgK        = 1000
 	)
 
 	ret := make([]Result, cfgK)
-	//result := h.Search(q, cfgEfSearch, cfgK)
-	result := h.SearchBrute(q, cfgK)
+	result := h.Search(q, cfgEfSearch, cfgK)
+	//result := h.SearchBrute(q, cfgK)
 	for i := 1; !result.Empty(); i++ {
 		x := result.Pop()
 		ret[cfgK-i] = Result{ID: x.ID, Distance: x.D}
@@ -29,19 +34,7 @@ func Search(h *Hnsw, q []float32) []Result {
 	return ret
 }
 
-func TestSimple(t *testing.T) {
-	const (
-		cfgM              = 32
-		cfgEfConstruction = 2000
-		dimsize           = 128
-
-		testrecords = 1000
-	)
-
-	var zero Point = make([]float32, dimsize)
-	h := New(cfgM, cfgEfConstruction, zero)
-	h.Grow(testrecords)
-
+func getTestdata(t *testing.T) ([]float32, [][]float32) {
 	data, err := ioutil.ReadFile("testdata/data.txt")
 	assert.NoError(t, err)
 
@@ -54,20 +47,53 @@ func TestSimple(t *testing.T) {
 		}
 	}
 
-	for i := 1; i < testrecords; i++ {
-		h.Add(vecs[i-1], uint32(i))
-	}
+	q := vecs[0]
+	vecs = vecs[1:]
 
-	q := vecs[testrecords-1]
+	return q, vecs
+}
+
+func newHnsw() *Hnsw {
+	const (
+		cfgM              = 32
+		cfgEfConstruction = 2000
+	)
+
+	var zero Point = make([]float32, dimsize)
+	h := New(cfgM, cfgEfConstruction, zero)
+	h.Grow(testrecords)
+
+	return h
+}
+
+func TestSimple(t *testing.T) {
+	h := newHnsw()
+	q, vecs := getTestdata(t)
+
+	count := 1
+	for _, v := range vecs {
+		h.Add(v, uint32(count))
+		count++
+	}
 
 	res := Search(h, q)
 
-	t.Logf("%s\n", h.Print())
-	t.Logf("%s\n", h.Stats())
+	cupaloy.SnapshotT(t, h.Print(), h.Stats(), res)
+}
 
-	for _, dp := range res {
-		t.Logf("dist=%f %d", dp.Distance, dp.ID)
+func TestSkip(t *testing.T) {
+	h := newHnsw()
+	q, vecs := getTestdata(t)
+
+	count := 1
+	for i, v := range vecs {
+		if i != 500 {
+			h.Add(v, uint32(count))
+			count++
+		}
 	}
+
+	res := Search(h, q)
 
 	cupaloy.SnapshotT(t, h.Print(), h.Stats(), res)
 }
