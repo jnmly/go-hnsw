@@ -16,8 +16,8 @@ type Result struct {
 }
 
 const (
-	testrecords = 10
-	dimsize     = 5
+	testrecords = 1000
+	dimsize     = 128
 )
 
 func Search(h *Hnsw, q []float32) []Result {
