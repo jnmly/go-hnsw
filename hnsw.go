@@ -1,16 +1,11 @@
 package hnsw
 
 import (
-	"compress/gzip"
-	"encoding/binary"
 	"fmt"
-	"io"
 	"math"
 	"math/rand"
-	"os"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/jnmly/go-hnsw/bitsetpool"
 	"github.com/jnmly/go-hnsw/distqueue"
@@ -50,167 +45,6 @@ type Hnsw struct {
 	enterpoint uint32
 }
 
-// Load opens a index file previously written by Save(). Returnes a new index and the timestamp the file was written
-func Load(filename string) (*Hnsw, int64, error) {
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, 0, err
-	}
-	z, err := gzip.NewReader(f)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	timestamp := readInt64(z)
-
-	h := new(Hnsw)
-	h.M = readInt32(z)
-	h.M0 = readInt32(z)
-	h.efConstruction = readInt32(z)
-	h.linkMode = readInt32(z)
-	h.DelaunayType = readInt32(z)
-	h.LevelMult = readFloat64(z)
-	h.maxLayer = readInt32(z)
-	h.enterpoint = uint32(readInt32(z))
-
-	h.DistFunc = f32.L2Squared8AVX
-	h.bitset = bitsetpool.New()
-
-	l := readInt32(z)
-	h.nodes = make([]node, l)
-
-	for i := range h.nodes {
-
-		l := readInt32(z)
-		h.nodes[i].p = make([]float32, l)
-
-		err = binary.Read(z, binary.LittleEndian, h.nodes[i].p)
-		if err != nil {
-			panic(err)
-		}
-		h.nodes[i].level = readInt32(z)
-
-		l = readInt32(z)
-		h.nodes[i].friends = make([][]uint32, l)
-
-		for j := range h.nodes[i].friends {
-			l := readInt32(z)
-			h.nodes[i].friends[j] = make([]uint32, l)
-			err = binary.Read(z, binary.LittleEndian, h.nodes[i].friends[j])
-			if err != nil {
-				panic(err)
-			}
-		}
-
-	}
-
-	z.Close()
-	f.Close()
-
-	return h, timestamp, nil
-}
-
-// Save writes to current index to a gzipped binary data file
-func (h *Hnsw) Save(filename string) error {
-	f, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	z := gzip.NewWriter(f)
-
-	timestamp := time.Now().Unix()
-
-	writeInt64(timestamp, z)
-
-	writeInt32(h.M, z)
-	writeInt32(h.M0, z)
-	writeInt32(h.efConstruction, z)
-	writeInt32(h.linkMode, z)
-	writeInt32(h.DelaunayType, z)
-	writeFloat64(h.LevelMult, z)
-	writeInt32(h.maxLayer, z)
-	writeInt32(int(h.enterpoint), z)
-
-	l := len(h.nodes)
-	writeInt32(l, z)
-
-	if err != nil {
-		return err
-	}
-	for _, n := range h.nodes {
-		l := len(n.p)
-		writeInt32(l, z)
-		err = binary.Write(z, binary.LittleEndian, []float32(n.p))
-		if err != nil {
-			panic(err)
-		}
-		writeInt32(n.level, z)
-
-		l = len(n.friends)
-		writeInt32(l, z)
-		for _, f := range n.friends {
-			l := len(f)
-			writeInt32(l, z)
-			err = binary.Write(z, binary.LittleEndian, f)
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-
-	z.Close()
-	f.Close()
-
-	return nil
-}
-
-func writeInt64(v int64, w io.Writer) {
-	err := binary.Write(w, binary.LittleEndian, &v)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func writeInt32(v int, w io.Writer) {
-	i := int32(v)
-	err := binary.Write(w, binary.LittleEndian, &i)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func readInt32(r io.Reader) int {
-	var i int32
-	err := binary.Read(r, binary.LittleEndian, &i)
-	if err != nil {
-		panic(err)
-	}
-	return int(i)
-}
-
-func writeFloat64(v float64, w io.Writer) {
-	err := binary.Write(w, binary.LittleEndian, &v)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func readInt64(r io.Reader) (v int64) {
-	err := binary.Read(r, binary.LittleEndian, &v)
-	if err != nil {
-		panic(err)
-	}
-	return
-}
-
-func readFloat64(r io.Reader) (v float64) {
-	err := binary.Read(r, binary.LittleEndian, &v)
-	if err != nil {
-		panic(err)
-	}
-	return
-}
-
 func (h *Hnsw) getFriends(n uint32, level int) []uint32 {
 	if len(h.nodes[n].friends) < level+1 {
 		return make([]uint32, 0)
@@ -241,16 +75,26 @@ func (h *Hnsw) Link(first, second uint32, level int) {
 		node.friends[level] = node.friends[level][0:1]
 		node.friends[level][0] = second
 
+		//h.usesOfId[second] = &levelIndex{
+		//	index: 0,
+		//	level: level,
+		//}
+
 	} else {
 		// we did have some already... this will allocate more space if it overflows maxL
 		node.friends[level] = append(node.friends[level], second)
+
+		//h.usesOfId[second] = &levelIndex{
+		//	index: len(node.friends[level]) - 1,
+		//	level: level,
+		//}
 	}
 
 	l := len(node.friends[level])
 
 	if l > maxL {
 
-		// to many links, deal with it
+		// too many links, deal with it
 
 		switch h.DelaunayType {
 		case 0:
@@ -517,6 +361,17 @@ func (h *Hnsw) Add(q Point, id uint32) {
 	h.Unlock()
 }
 
+func (h *Hnsw) Remove(id uint32) {
+	fmt.Printf("len %v\n", len(h.nodes))
+	base := h.nodes[:id]
+	deleted := h.nodes[id]
+	other := h.nodes[id+1:]
+	fmt.Printf("BASE %v\n", base)
+	fmt.Printf("OTHER %v\n", other)
+	fmt.Printf("DELETED %d %v\n", id, deleted)
+	h.nodes = append(base, other...)
+}
+
 func (h *Hnsw) searchAtLayer(q Point, resultSet *distqueue.DistQueueClosestLast, efConstruction int, ep *distqueue.Item, level int) {
 
 	var pool, visited = h.bitset.Get()
@@ -579,26 +434,6 @@ func (h *Hnsw) SearchBrute(q Point, K int) *distqueue.DistQueueClosestLast {
 	return resultSet
 }
 
-// Benchmark test precision by comparing the results of SearchBrute and Search
-func (h *Hnsw) Benchmark(q Point, ef int, K int) float64 {
-	result := h.Search(q, ef, K)
-	groundTruth := h.SearchBrute(q, K)
-	truth := make([]uint32, 0)
-	for groundTruth.Len() > 0 {
-		truth = append(truth, groundTruth.Pop().ID)
-	}
-	p := 0
-	for result.Len() > 0 {
-		i := result.Pop()
-		for j := 0; j < K; j++ {
-			if truth[j] == i.ID {
-				p++
-			}
-		}
-	}
-	return float64(p) / float64(K)
-}
-
 func (h *Hnsw) Search(q Point, ef int, K int) *distqueue.DistQueueClosestLast {
 
 	h.RLock()
@@ -612,7 +447,9 @@ func (h *Hnsw) Search(q Point, ef int, K int) *distqueue.DistQueueClosestLast {
 		changed := true
 		for changed {
 			changed = false
+			fmt.Printf("friends (epId=%d, level=%d) = %v\n", ep.ID, level, h.getFriends(ep.ID, level))
 			for _, i := range h.getFriends(ep.ID, level) {
+				fmt.Printf("I (epId=%d, level=%d) is %d/%d\n", ep.ID, level, i, len(h.nodes)-1)
 				d := h.DistFunc(h.nodes[i].p, q)
 				if d < ep.D {
 					ep.ID, ep.D = i, d
