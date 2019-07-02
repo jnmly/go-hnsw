@@ -16,8 +16,8 @@ type Result struct {
 }
 
 const (
-	testrecords = 1000
-	dimsize     = 128
+	testrecords = 10
+	dimsize     = 5
 )
 
 func Search(h *Hnsw, q []float32) []Result {
@@ -103,10 +103,8 @@ func TestRemove(t *testing.T) {
 	h := newHnsw()
 	q, vecs := getTestdata(t)
 
-	count := 1
-	for _, v := range vecs {
-		h.Add(v, uint32(count))
-		count++
+	for i, v := range vecs {
+		h.Add(v, uint32(i+1))
 	}
 
 	h.Remove(6)
