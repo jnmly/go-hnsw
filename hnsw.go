@@ -13,6 +13,11 @@ import (
 	"github.com/jnmly/go-hnsw/node"
 )
 
+const (
+	deluanayTypeSimple = iota
+	deluanayTypeHeuristic
+)
+
 type Hnsw struct {
 	sync.RWMutex
 	M              int
@@ -66,7 +71,7 @@ func (h *Hnsw) Link(first, second *node.Node, level int) {
 		// too many links, deal with it
 
 		switch h.DelaunayType {
-		case 0:
+		case deluanayTypeSimple:
 			resultSet := &distqueue.DistQueueClosestLast{Size: len(first.Friends[level])}
 
 			for _, n := range first.Friends[level] {
@@ -82,7 +87,7 @@ func (h *Hnsw) Link(first, second *node.Node, level int) {
 				first.Friends[level][i] = item.ID
 			}
 
-		case 1:
+		case deluanayTypeHeuristic:
 
 			resultSet := &distqueue.DistQueueClosestFirst{Size: len(first.Friends[level])}
 
@@ -184,7 +189,7 @@ func New(M int, efConstruction int, first node.Point) *Hnsw {
 	h.LevelMult = 1 / math.Log(float64(M))
 	h.efConstruction = efConstruction
 	h.M0 = 2 * M
-	h.DelaunayType = 1
+	h.DelaunayType = deluanayTypeHeuristic
 
 	h.bitset = bitsetpool.New()
 
@@ -297,12 +302,12 @@ func (h *Hnsw) Add(q node.Point, id uint32) {
 		resultSet := &distqueue.DistQueueClosestLast{}
 		h.searchAtLayer(q, resultSet, h.efConstruction, ep, level)
 		switch h.DelaunayType {
-		case 0:
+		case deluanayTypeSimple:
 			// shrink resultSet to M closest elements (the simple heuristic)
 			for resultSet.Len() > h.M {
 				resultSet.Pop()
 			}
-		case 1:
+		case deluanayTypeHeuristic:
 			h.getNeighborsByHeuristicClosestLast(resultSet, h.M)
 		}
 		newNode.Friends[level] = make([]*node.Node, resultSet.Len())
