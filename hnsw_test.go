@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	//"github.com/bradleyjkemp/cupaloy"
+	"github.com/bradleyjkemp/cupaloy"
 	"github.com/jnmly/go-hnsw/node"
 	"github.com/stretchr/testify/assert"
 )
@@ -82,7 +82,7 @@ func TestSimple(t *testing.T) {
 	}
 
 	Search(h, q)
-	//t.Logf("%s\n%s\n%v\n", h.Print(), h.Stats(), res)
+	cupaloy.SnapshotT(t, h.Print(), h.Stats())
 }
 
 func TestSkip(t *testing.T) {
@@ -96,9 +96,7 @@ func TestSkip(t *testing.T) {
 	}
 
 	Search(h, q)
-	//t.Logf("%s\n%s\n%v\n", h.Print(), h.Stats(), res)
-
-	//cupaloy.SnapshotT(t, h.Print(), h.Stats(), res)
+	cupaloy.SnapshotT(t, h.Print(), h.Stats())
 }
 
 func TestRemove(t *testing.T) {
@@ -114,7 +112,5 @@ func TestRemove(t *testing.T) {
 	h.Remove(6)
 
 	Search(h, q)
-	//t.Logf("%s\n%s\n%v\n", h.Print(), h.Stats(), res)
-
-	//cupaloy.SnapshotT(t, h.Print(), h.Stats(), res)
+	cupaloy.SnapshotT(t, h.Print(), h.Stats())
 }
