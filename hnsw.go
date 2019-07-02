@@ -32,46 +32,34 @@ type Hnsw struct {
 	enterpoint *node.Node
 }
 
-func (h *Hnsw) Link(first, second uint32, level int) {
+func (h *Hnsw) Link(first, second *node.Node, level int) {
+	//fmt.Printf("entered Link\n")
+	//defer fmt.Printf("left Link\n")
 
 	maxL := h.M
 	if level == 0 {
 		maxL = h.M0
 	}
 
-	h.RLock()
-	this := &h.nodes[first]
-	h.RUnlock()
-
-	this.Lock()
+	first.Lock()
 
 	// check if we have allocated friends slices up to this level?
-	if len(this.Friends) < level+1 {
-		for j := len(this.Friends); j <= level; j++ {
+	if len(first.Friends) < level+1 {
+		for j := len(first.Friends); j <= level; j++ {
 			// allocate new list with 0 elements but capacity maxL
 			elem := make([]*node.Node, 0, maxL)
-			this.Friends = append(this.Friends, elem)
+			first.Friends = append(first.Friends, elem)
 		}
 		// now grow it by one and add the first connection for this layer
-		this.Friends[level] = this.Friends[level][0:1]
-		this.Friends[level][0] = &h.nodes[second]
-
-		//h.usesOfId[second] = &levelIndex{
-		//	index: 0,
-		//	level: level,
-		//}
+		first.Friends[level] = first.Friends[level][0:1]
+		first.Friends[level][0] = second
 
 	} else {
 		// we did have some already... this will allocate more space if it overflows maxL
-		this.Friends[level] = append(this.Friends[level], &h.nodes[second])
-
-		//h.usesOfId[second] = &levelIndex{
-		//	index: len(node.Friends[level]) - 1,
-		//	level: level,
-		//}
+		first.Friends[level] = append(first.Friends[level], second)
 	}
 
-	l := len(this.Friends[level])
+	l := len(first.Friends[level])
 
 	if l > maxL {
 
@@ -79,42 +67,44 @@ func (h *Hnsw) Link(first, second uint32, level int) {
 
 		switch h.DelaunayType {
 		case 0:
-			resultSet := &distqueue.DistQueueClosestLast{Size: len(this.Friends[level])}
+			resultSet := &distqueue.DistQueueClosestLast{Size: len(first.Friends[level])}
 
-			for _, n := range this.Friends[level] {
-				resultSet.Push(n, h.DistFunc(this.P, n.P))
+			for _, n := range first.Friends[level] {
+				resultSet.Push(n, h.DistFunc(first.P, n.P))
 			}
 			for resultSet.Len() > maxL {
 				resultSet.Pop()
 			}
 			// FRIENDS ARE STORED IN DISTANCE ORDER, closest at index 0
-			this.Friends[level] = this.Friends[level][0:maxL]
+			first.Friends[level] = first.Friends[level][0:maxL]
 			for i := maxL - 1; i >= 0; i-- {
 				item := resultSet.Pop()
-				this.Friends[level][i] = item.ID
+				first.Friends[level][i] = item.ID
 			}
 
 		case 1:
 
-			resultSet := &distqueue.DistQueueClosestFirst{Size: len(this.Friends[level])}
+			resultSet := &distqueue.DistQueueClosestFirst{Size: len(first.Friends[level])}
 
-			for _, n := range this.Friends[level] {
-				resultSet.Push(n, h.DistFunc(this.P, n.P))
+			for _, n := range first.Friends[level] {
+				resultSet.Push(n, h.DistFunc(first.P, n.P))
 			}
 			h.getNeighborsByHeuristicClosestFirst(resultSet, maxL)
 
 			// FRIENDS ARE STORED IN DISTANCE ORDER, closest at index 0
-			this.Friends[level] = this.Friends[level][0:maxL]
+			first.Friends[level] = first.Friends[level][0:maxL]
 			for i := 0; i < maxL; i++ {
 				item := resultSet.Pop()
-				this.Friends[level][i] = item.ID
+				first.Friends[level][i] = item.ID
 			}
 		}
 	}
-	this.Unlock()
+	first.Unlock()
 }
 
 func (h *Hnsw) getNeighborsByHeuristicClosestLast(resultSet1 *distqueue.DistQueueClosestLast, M int) {
+	//fmt.Printf("entered getNeighborsByHeuristicClosestLast\n")
+	//defer fmt.Printf("left getNeighborsByHeuristicClosestLast\n")
 	if resultSet1.Len() <= M {
 		return
 	}
@@ -151,6 +141,8 @@ func (h *Hnsw) getNeighborsByHeuristicClosestLast(resultSet1 *distqueue.DistQueu
 }
 
 func (h *Hnsw) getNeighborsByHeuristicClosestFirst(resultSet *distqueue.DistQueueClosestFirst, M int) {
+	//fmt.Printf("entered getNeighborsByHeuristicClosestFirst\n")
+	//defer fmt.Printf("left getNeighborsByHeuristicClosestFirst\n")
 	if resultSet.Len() <= M {
 		return
 	}
@@ -265,6 +257,8 @@ func (h *Hnsw) Grow(size int) {
 }
 
 func (h *Hnsw) Add(q node.Point, id uint32) {
+	//fmt.Printf("entered Add\n")
+	//defer fmt.Printf("left Add\n")
 
 	if id == 0 {
 		panic("Id 0 is reserved, use ID:s starting from 1 when building index")
@@ -330,7 +324,7 @@ func (h *Hnsw) Add(q node.Point, id uint32) {
 	// now add connections to newNode from newNodes neighbours (makes it visible in the graph)
 	for level := min(curlevel, currentMaxLayer); level >= 0; level-- {
 		for _, n := range newNode.Friends[level] {
-			h.Link(n.Myid, newID, level)
+			h.Link(n, &newNode, level)
 		}
 	}
 
@@ -343,12 +337,17 @@ func (h *Hnsw) Add(q node.Point, id uint32) {
 }
 
 func (h *Hnsw) Remove(id uint32) {
+	//fmt.Printf("entered Remove\n")
+	//defer fmt.Printf("left Remove\n")
 	base := h.nodes[:id]
 	other := h.nodes[id+1:]
 	h.nodes = append(base, other...)
 }
 
 func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosestLast, efConstruction int, ep *distqueue.Item, level int) {
+
+	//fmt.Printf("entered searchAtLayer\n")
+	//defer fmt.Printf("left searchAtLayer\n")
 
 	var pool, visited = h.bitset.Get()
 	//visited := make(map[uint32]bool)
@@ -371,8 +370,8 @@ func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosest
 		}
 
 		if len(c.ID.Friends) >= level+1 {
-			Friends := c.ID.Friends[level]
-			for _, n := range Friends {
+			friends := c.ID.Friends[level]
+			for _, n := range friends {
 				if !visited.Test(uint(n.Myid)) {
 					visited.Set(uint(n.Myid))
 					d := h.DistFunc(q, n.P)
@@ -394,6 +393,8 @@ func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosest
 
 // SearchBrute returns the true K nearest neigbours to search point q
 func (h *Hnsw) SearchBrute(q node.Point, K int) *distqueue.DistQueueClosestLast {
+	//fmt.Printf("entered SearchBrute\n")
+	//defer fmt.Printf("left SearchBrute\n")
 	resultSet := &distqueue.DistQueueClosestLast{Size: K}
 	for i := 1; i < len(h.nodes); i++ {
 		d := h.DistFunc(h.nodes[i].P, q)
@@ -411,6 +412,8 @@ func (h *Hnsw) SearchBrute(q node.Point, K int) *distqueue.DistQueueClosestLast 
 }
 
 func (h *Hnsw) Search(q node.Point, ef int, K int) *distqueue.DistQueueClosestLast {
+	//fmt.Printf("entered Search\n")
+	//defer fmt.Printf("left Search\n")
 
 	h.RLock()
 	currentMaxLayer := h.maxLayer
