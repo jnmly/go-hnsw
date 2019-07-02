@@ -5,11 +5,12 @@ import (
 	"testing"
 
 	"github.com/bradleyjkemp/cupaloy"
+	"github.com/jnmly/go-hnsw/node"
 	"github.com/stretchr/testify/assert"
 )
 
 type Result struct {
-	ID       uint32
+	ID       *node.Node
 	Distance float32
 }
 
@@ -59,7 +60,7 @@ func newHnsw() *Hnsw {
 		cfgEfConstruction = 2000
 	)
 
-	var zero Point = make([]float32, dimsize)
+	var zero node.Point = make([]float32, dimsize)
 	h := New(cfgM, cfgEfConstruction, zero)
 	h.Grow(testrecords)
 

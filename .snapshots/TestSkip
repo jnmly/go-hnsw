@@ -37,86 +37,30 @@ node 1
 node 2
      level 0 friend 0 = 1
      level 0 friend 1 = 0
-     level 0 friend 2 = 3
-     level 0 friend 3 = 4
-     level 0 friend 4 = 5
-     level 0 friend 5 = 7
-     level 0 friend 6 = 8
-     level 0 friend 7 = 9
      level 1 friend 0 = 1
-     level 1 friend 1 = 3
-     level 1 friend 2 = 4
-     level 1 friend 3 = 5
-     level 1 friend 4 = 7
-     level 1 friend 5 = 8
-     level 1 friend 6 = 9
 
 
 
 node 3
-     level 0 friend 0 = 2
-     level 0 friend 1 = 1
-     level 0 friend 2 = 0
-     level 0 friend 3 = 4
-     level 0 friend 4 = 5
-     level 0 friend 5 = 7
-     level 0 friend 6 = 8
-     level 0 friend 7 = 9
-     level 1 friend 0 = 2
-     level 1 friend 1 = 1
-     level 1 friend 2 = 4
-     level 1 friend 3 = 5
-     level 1 friend 4 = 7
-     level 1 friend 5 = 8
-     level 1 friend 6 = 9
+     level 0 friend 0 = 1
+     level 0 friend 1 = 0
+     level 1 friend 0 = 1
 
 
 
 node 4
-     level 0 friend 0 = 2
-     level 0 friend 1 = 3
-     level 0 friend 2 = 1
-     level 0 friend 3 = 0
-     level 0 friend 4 = 5
-     level 0 friend 5 = 7
-     level 0 friend 6 = 8
-     level 0 friend 7 = 9
-     level 1 friend 0 = 2
-     level 1 friend 1 = 3
-     level 1 friend 2 = 1
-     level 1 friend 3 = 5
-     level 1 friend 4 = 7
-     level 1 friend 5 = 8
-     level 1 friend 6 = 9
+     level 0 friend 0 = 1
+     level 0 friend 1 = 0
+     level 1 friend 0 = 1
      level 2 friend 0 = 1
-     level 2 friend 1 = 5
-     level 2 friend 2 = 7
-     level 2 friend 3 = 8
-     level 2 friend 4 = 9
 
 
 
 node 5
-     level 0 friend 0 = 2
-     level 0 friend 1 = 3
-     level 0 friend 2 = 1
-     level 0 friend 3 = 4
-     level 0 friend 4 = 0
-     level 0 friend 5 = 7
-     level 0 friend 6 = 8
-     level 0 friend 7 = 9
-     level 1 friend 0 = 2
-     level 1 friend 1 = 3
-     level 1 friend 2 = 1
-     level 1 friend 3 = 4
-     level 1 friend 4 = 7
-     level 1 friend 5 = 8
-     level 1 friend 6 = 9
+     level 0 friend 0 = 1
+     level 0 friend 1 = 0
+     level 1 friend 0 = 1
      level 2 friend 0 = 1
-     level 2 friend 1 = 4
-     level 2 friend 2 = 7
-     level 2 friend 3 = 8
-     level 2 friend 4 = 9
 
 
 
@@ -126,73 +70,25 @@ node 6
 
 node 7
      level 0 friend 0 = 1
-     level 0 friend 1 = 5
-     level 0 friend 2 = 3
-     level 0 friend 3 = 2
-     level 0 friend 4 = 4
-     level 0 friend 5 = 0
-     level 0 friend 6 = 8
-     level 0 friend 7 = 9
+     level 0 friend 1 = 0
      level 1 friend 0 = 1
-     level 1 friend 1 = 5
-     level 1 friend 2 = 3
-     level 1 friend 3 = 2
-     level 1 friend 4 = 4
-     level 1 friend 5 = 8
-     level 1 friend 6 = 9
      level 2 friend 0 = 1
-     level 2 friend 1 = 5
-     level 2 friend 2 = 4
-     level 2 friend 3 = 8
-     level 2 friend 4 = 9
 
 
 
 node 8
-     level 0 friend 0 = 2
-     level 0 friend 1 = 4
-     level 0 friend 2 = 1
-     level 0 friend 3 = 7
-     level 0 friend 4 = 3
-     level 0 friend 5 = 5
-     level 0 friend 6 = 0
-     level 0 friend 7 = 9
-     level 1 friend 0 = 2
-     level 1 friend 1 = 4
-     level 1 friend 2 = 1
-     level 1 friend 3 = 7
-     level 1 friend 4 = 3
-     level 1 friend 5 = 5
-     level 1 friend 6 = 9
-     level 2 friend 0 = 4
-     level 2 friend 1 = 1
-     level 2 friend 2 = 7
-     level 2 friend 3 = 5
-     level 2 friend 4 = 9
+     level 0 friend 0 = 1
+     level 0 friend 1 = 0
+     level 1 friend 0 = 1
+     level 2 friend 0 = 1
 
 
 
 node 9
-     level 0 friend 0 = 8
-     level 0 friend 1 = 7
-     level 0 friend 2 = 1
-     level 0 friend 3 = 5
-     level 0 friend 4 = 3
-     level 0 friend 5 = 2
-     level 0 friend 6 = 4
-     level 0 friend 7 = 0
-     level 1 friend 0 = 8
-     level 1 friend 1 = 7
-     level 1 friend 2 = 1
-     level 1 friend 3 = 5
-     level 1 friend 4 = 3
-     level 1 friend 5 = 2
-     level 1 friend 6 = 4
-     level 2 friend 0 = 8
-     level 2 friend 1 = 7
-     level 2 friend 2 = 1
-     level 2 friend 3 = 5
-     level 2 friend 4 = 4
+     level 0 friend 0 = 1
+     level 0 friend 1 = 0
+     level 1 friend 0 = 1
+     level 2 friend 0 = 1
 
 
 
@@ -202,211 +98,281 @@ M: 32, efConstruction: 2000
 DelaunayType: 1
 Number of nodes: 10
 Max layer: 2
-Level 0: 2 nodes, average number of connections 8
-Level 1: 2 nodes, average number of connections 7
-Level 2: 6 nodes, average number of connections 5
+Level 0: 2 nodes, average number of connections 3
+Level 1: 2 nodes, average number of connections 1
+Level 2: 6 nodes, average number of connections 1
 Memory use for data: 180 (18 bytes / point)
 Memory use for index: 4352 (avg 435 bytes / point)
 
 ([]hnsw.Result) (len=50) {
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)(<nil>),
     Distance: (float32) 0
   },
   (hnsw.Result) {
-    ID: (uint32) 1,
+    ID: (*node.Node)(<nil>),
+    Distance: (float32) 0
+  },
+  (hnsw.Result) {
+    ID: (*node.Node)(<nil>),
+    Distance: (float32) 0
+  },
+  (hnsw.Result) {
+    ID: (*node.Node)(<nil>),
+    Distance: (float32) 0
+  },
+  (hnsw.Result) {
+    ID: (*node.Node)(<nil>),
+    Distance: (float32) 0
+  },
+  (hnsw.Result) {
+    ID: (*node.Node)(<nil>),
+    Distance: (float32) 0
+  },
+  (hnsw.Result) {
+    ID: (*node.Node)(<nil>),
+    Distance: (float32) 0
+  },
+  (hnsw.Result) {
+    ID: (*node.Node)(<nil>),
+    Distance: (float32) 0
+  },
+  (hnsw.Result) {
+    ID: (*node.Node)({
+      RWMutex: (sync.RWMutex) {
+        w: (sync.Mutex) {
+          state: (int32) 0,
+          sema: (uint32) 0
+        },
+        writerSem: (uint32) 0,
+        readerSem: (uint32) 0,
+        readerCount: (int32) 0,
+        readerWait: (int32) 0
+      },
+      locked: (bool) false,
+      P: (node.Point) (len=5) {
+        (float32) 79,
+        (float32) 27,
+        (float32) 105,
+        (float32) 14,
+        (float32) 83
+      },
+      Level: (int) 2,
+      Friends: ([][]*node.Node) (len=1) {
+        ([]*node.Node) (len=1) {
+          (*node.Node)({
+            RWMutex: (sync.RWMutex) {
+              w: (sync.Mutex) {
+                state: (int32) 0,
+                sema: (uint32) 0
+              },
+              writerSem: (uint32) 0,
+              readerSem: (uint32) 0,
+              readerCount: (int32) 0,
+              readerWait: (int32) 0
+            },
+            locked: (bool) false,
+            P: (node.Point) (len=5) {
+              (float32) 0,
+              (float32) 0,
+              (float32) 0,
+              (float32) 0,
+              (float32) 0
+            },
+            Level: (int) 0,
+            Friends: ([][]*node.Node) <nil>,
+            Myid: (uint32) 0
+          })
+        }
+      },
+      Myid: (uint32) 1
+    }),
     Distance: (float32) 102698
   },
   (hnsw.Result) {
-    ID: (uint32) 7,
-    Distance: (float32) 103751
-  },
-  (hnsw.Result) {
-    ID: (uint32) 9,
-    Distance: (float32) 117153
-  },
-  (hnsw.Result) {
-    ID: (uint32) 5,
-    Distance: (float32) 119561
-  },
-  (hnsw.Result) {
-    ID: (uint32) 2,
-    Distance: (float32) 164420
-  },
-  (hnsw.Result) {
-    ID: (uint32) 4,
-    Distance: (float32) 190414
-  },
-  (hnsw.Result) {
-    ID: (uint32) 8,
-    Distance: (float32) 202068
-  },
-  (hnsw.Result) {
-    ID: (uint32) 3,
-    Distance: (float32) 209926
-  },
-  (hnsw.Result) {
-    ID: (uint32) 0,
+    ID: (*node.Node)({
+      RWMutex: (sync.RWMutex) {
+        w: (sync.Mutex) {
+          state: (int32) 0,
+          sema: (uint32) 0
+        },
+        writerSem: (uint32) 0,
+        readerSem: (uint32) 0,
+        readerCount: (int32) 0,
+        readerWait: (int32) 0
+      },
+      locked: (bool) false,
+      P: (node.Point) (len=5) {
+        (float32) 0,
+        (float32) 0,
+        (float32) 0,
+        (float32) 0,
+        (float32) 0
+      },
+      Level: (int) 0,
+      Friends: ([][]*node.Node) <nil>,
+      Myid: (uint32) 0
+    }),
     Distance: (float32) +Inf
   }
 }
