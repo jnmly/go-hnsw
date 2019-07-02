@@ -370,8 +370,6 @@ func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosest
 			break
 		}
 
-		fmt.Printf("things are %d %d\n", c.ID.Myid, len(h.nodes)-1)
-
 		if len(c.ID.Friends) >= level+1 {
 			Friends := c.ID.Friends[level]
 			for _, n := range Friends {
