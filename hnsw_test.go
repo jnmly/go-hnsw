@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"testing"
 
+	"github.com/bradleyjkemp/cupaloy"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -60,7 +61,13 @@ func TestSimple(t *testing.T) {
 	q := vecs[testrecords-1]
 
 	res := Search(h, q)
+
+	t.Logf("%s\n", h.Print())
+	t.Logf("%s\n", h.Stats())
+
 	for _, dp := range res {
 		t.Logf("dist=%f %d", dp.Distance, dp.ID)
 	}
+
+	cupaloy.SnapshotT(t, h.Print(), h.Stats(), res)
 }

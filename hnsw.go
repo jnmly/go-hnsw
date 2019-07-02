@@ -8,6 +8,7 @@ import (
 	"math"
 	"math/rand"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
@@ -408,6 +409,23 @@ func (h *Hnsw) Stats() string {
 	s = s + fmt.Sprintf("Memory use for data: %v (%v bytes / point)\n", memoryUseData, memoryUseData/len(h.nodes))
 	s = s + fmt.Sprintf("Memory use for index: %v (avg %v bytes / point)\n", memoryUseIndex, memoryUseIndex/len(h.nodes))
 	return s
+}
+
+func (h *Hnsw) Print() string {
+	buf := strings.Builder{}
+
+	for i, n := range h.nodes {
+		buf.WriteString(fmt.Sprintf("node %d\n", i))
+		for j := range n.friends {
+			arr := n.friends[j]
+			for k := range arr {
+				buf.WriteString(fmt.Sprintf("     level %d friend %d = %d\n", j, k, n.friends[j][k]))
+			}
+		}
+		buf.WriteString("\n\n\n")
+	}
+
+	return buf.String()
 }
 
 func (h *Hnsw) Grow(size int) {
