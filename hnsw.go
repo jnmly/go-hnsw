@@ -77,7 +77,7 @@ func (h *Hnsw) Link(first, second *node.Node, level int) {
 			first.Friends[level] = first.Friends[level][0:maxL]
 			for i := maxL - 1; i >= 0; i-- {
 				item := resultSet.Pop()
-				first.Friends[level][i] = item.ID
+				first.Friends[level][i] = item.Node
 			}
 
 		case deluanayTypeHeuristic:
@@ -93,7 +93,7 @@ func (h *Hnsw) Link(first, second *node.Node, level int) {
 			first.Friends[level] = first.Friends[level][0:maxL]
 			for i := 0; i < maxL; i++ {
 				item := resultSet.Pop()
-				first.Friends[level][i] = item.ID
+				first.Friends[level][i] = item.Node
 			}
 		}
 	}
@@ -119,7 +119,7 @@ func (h *Hnsw) getNeighborsByHeuristicClosestLast(resultSet1 *distqueue.DistQueu
 		e := resultSet.Pop()
 		good := true
 		for _, r := range result {
-			if h.DistFunc(r.ID.P, e.ID.P) < e.D {
+			if h.DistFunc(r.Node.P, e.Node.P) < e.D {
 				good = false
 				break
 			}
@@ -153,7 +153,7 @@ func (h *Hnsw) getNeighborsByHeuristicClosestFirst(resultSet *distqueue.DistQueu
 		e := resultSet.Pop()
 		good := true
 		for _, r := range result {
-			if h.DistFunc(r.ID.P, e.ID.P) < e.D {
+			if h.DistFunc(r.Node.P, e.Node.P) < e.D {
 				good = false
 				break
 			}
@@ -266,7 +266,7 @@ func (h *Hnsw) Add(q node.Point, id uint32) {
 	curlevel := int(math.Floor(-math.Log(rand.Float64() * h.LevelMult)))
 
 	currentMaxLayer := h.enterpoint.Level
-	ep := &distqueue.Item{ID: h.enterpoint, D: h.DistFunc(h.enterpoint.P, q)}
+	ep := &distqueue.Item{Node: h.enterpoint, D: h.DistFunc(h.enterpoint.P, q)}
 
 	// assume Grow has been called in advance
 	newID := id
@@ -277,10 +277,10 @@ func (h *Hnsw) Add(q node.Point, id uint32) {
 		changed := true
 		for changed {
 			changed = false
-			for _, n := range ep.ID.GetFriends(level) {
+			for _, n := range ep.Node.GetFriends(level) {
 				d := h.DistFunc(n.P, q)
 				if d < ep.D {
-					ep = &distqueue.Item{ID: n, D: d}
+					ep = &distqueue.Item{Node: n, D: d}
 					changed = true
 				}
 			}
@@ -307,7 +307,7 @@ func (h *Hnsw) Add(q node.Point, id uint32) {
 		for i := resultSet.Len() - 1; i >= 0; i-- {
 			item := resultSet.Pop()
 			// store in order, closest at index 0
-			newNode.Friends[level][i] = item.ID
+			newNode.Friends[level][i] = item.Node
 		}
 	}
 
@@ -352,11 +352,11 @@ func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosest
 
 	candidates := &distqueue.DistQueueClosestFirst{Size: efConstruction * 3}
 
-	visited.Set(uint(ep.ID.Myid))
-	//visited[ep.ID] = true
-	candidates.Push(ep.ID, ep.D)
+	visited.Set(uint(ep.Node.Myid))
+	//visited[ep.Node] = true
+	candidates.Push(ep.Node, ep.D)
 
-	resultSet.Push(ep.ID, ep.D)
+	resultSet.Push(ep.Node, ep.D)
 
 	for candidates.Len() > 0 {
 		_, lowerBound := resultSet.Top() // worst distance so far
@@ -367,8 +367,8 @@ func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosest
 			break
 		}
 
-		if c.ID.FriendLevelCount() >= level+1 {
-			friends := c.ID.Friends[level]
+		if c.Node.FriendLevelCount() >= level+1 {
+			friends := c.Node.Friends[level]
 			for _, n := range friends {
 				if !visited.Test(uint(n.Myid)) {
 					visited.Set(uint(n.Myid))
@@ -415,7 +415,7 @@ func (h *Hnsw) Search(q node.Point, ef int, K int) *distqueue.DistQueueClosestLa
 
 	h.RLock()
 	currentMaxLayer := h.maxLayer
-	ep := &distqueue.Item{ID: h.enterpoint, D: h.DistFunc(h.enterpoint.P, q)}
+	ep := &distqueue.Item{Node: h.enterpoint, D: h.DistFunc(h.enterpoint.P, q)}
 	h.RUnlock()
 
 	resultSet := &distqueue.DistQueueClosestLast{Size: ef + 1}
@@ -424,10 +424,10 @@ func (h *Hnsw) Search(q node.Point, ef int, K int) *distqueue.DistQueueClosestLa
 		changed := true
 		for changed {
 			changed = false
-			for _, n := range ep.ID.GetFriends(level) {
+			for _, n := range ep.Node.GetFriends(level) {
 				d := h.DistFunc(n.P, q)
 				if d < ep.D {
-					ep.ID, ep.D = n, d
+					ep.Node, ep.D = n, d
 					changed = true
 				}
 			}

@@ -5,8 +5,8 @@ import (
 )
 
 type Item struct {
-	ID *node.Node
-	D  float32
+	Node *node.Node
+	D    float32
 }
 
 type DistQueueClosestFirst struct {
@@ -42,7 +42,7 @@ func (pq *DistQueueClosestFirst) Push(id *node.Node, d float32) *Item {
 	if !pq.initiated {
 		pq.Init()
 	}
-	item := &Item{ID: id, D: d}
+	item := &Item{Node: id, D: d}
 	pq.items = append(pq.items, item)
 	pq.swim(len(pq.items) - 1)
 	return item
@@ -72,14 +72,14 @@ func (pq *DistQueueClosestFirst) Top() (*node.Node, float32) {
 	if len(pq.items) <= 1 {
 		return nil, 0
 	}
-	return pq.items[1].ID, pq.items[1].D
+	return pq.items[1].Node, pq.items[1].D
 }
 
 func (pq *DistQueueClosestFirst) Head() (*node.Node, float32) {
 	if len(pq.items) <= 1 {
 		return nil, 0
 	}
-	return pq.items[1].ID, pq.items[1].D
+	return pq.items[1].Node, pq.items[1].D
 }
 
 func (pq *DistQueueClosestFirst) Len() int {
@@ -141,7 +141,7 @@ func (pq *DistQueueClosestLast) Push(id *node.Node, d float32) *Item {
 	if !pq.initiated {
 		pq.Init()
 	}
-	item := &Item{ID: id, D: d}
+	item := &Item{Node: id, D: d}
 	pq.items = append(pq.items, item)
 	pq.swim(len(pq.items) - 1)
 	return item
@@ -152,7 +152,7 @@ func (pq *DistQueueClosestLast) PopAndPush(id *node.Node, d float32) *Item {
 	if !pq.initiated {
 		pq.Init()
 	}
-	item := &Item{ID: id, D: d}
+	item := &Item{Node: id, D: d}
 	pq.items[1] = item
 	pq.sink(1)
 	return item
@@ -181,14 +181,14 @@ func (pq *DistQueueClosestLast) Top() (*node.Node, float32) {
 	if len(pq.items) <= 1 {
 		return nil, 0
 	}
-	return pq.items[1].ID, pq.items[1].D
+	return pq.items[1].Node, pq.items[1].D
 }
 
 func (pq *DistQueueClosestLast) Head() (*node.Node, float32) {
 	if len(pq.items) <= 1 {
 		return nil, 0
 	}
-	return pq.items[1].ID, pq.items[1].D
+	return pq.items[1].Node, pq.items[1].D
 }
 
 func (pq *DistQueueClosestLast) Len() int {

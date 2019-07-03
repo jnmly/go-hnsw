@@ -11,7 +11,7 @@ import (
 )
 
 type Result struct {
-	ID       *node.Node
+	Node     *node.Node
 	Distance float32
 }
 
@@ -34,7 +34,7 @@ func Search(h *Hnsw, q []float32) []Result {
 	//result := h.SearchBrute(q, cfgK)
 	for i := 1; !result.Empty(); i++ {
 		x := result.Pop()
-		ret[cfgK-i] = Result{ID: x.ID, Distance: x.D}
+		ret[cfgK-i] = Result{Node: x.Node, Distance: x.D}
 	}
 	return ret
 }
