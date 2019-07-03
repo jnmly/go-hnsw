@@ -49,28 +49,23 @@ func (h *Hnsw) Link(first, second *node.Node, level int) {
 	first.Lock()
 
 	// check if we have allocated friends slices up to this level?
-	if len(first.Friends) < level+1 {
-		for j := first.FriendCount(); j <= level; j++ {
+	if first.FriendLevelCount() < level+1 {
+		for j := first.FriendLevelCount(); j <= level; j++ {
 			// allocate new list with 0 elements but capacity maxL
-			elem := make([]*node.Node, 0, maxL)
-			first.Friends = append(first.Friends, elem)
+			first.Friends = append(first.Friends, make([]*node.Node, 0, maxL))
 		}
-		// now grow it by one and add the first connection for this layer
-		first.Friends[level] = first.Friends[level][0:1]
-		first.Friends[level][0] = second
-
-	} else {
-		// we did have some already... this will allocate more space if it overflows maxL
-		first.Friends[level] = append(first.Friends[level], second)
 	}
 
-	if first.FriendCountLevel(level) > maxL {
+	// link with second node
+	first.Friends[level] = append(first.Friends[level], second)
+
+	if first.FriendCountAtLevel(level) > maxL {
 
 		// too many links, deal with it
 
 		switch h.DelaunayType {
 		case deluanayTypeSimple:
-			resultSet := &distqueue.DistQueueClosestLast{Size: first.FriendCountLevel(level)}
+			resultSet := &distqueue.DistQueueClosestLast{Size: first.FriendCountAtLevel(level)}
 
 			for _, n := range first.Friends[level] {
 				resultSet.Push(n, h.DistFunc(first.P, n.P))
@@ -87,7 +82,7 @@ func (h *Hnsw) Link(first, second *node.Node, level int) {
 
 		case deluanayTypeHeuristic:
 
-			resultSet := &distqueue.DistQueueClosestFirst{Size: first.FriendCountLevel(level)}
+			resultSet := &distqueue.DistQueueClosestFirst{Size: first.FriendCountAtLevel(level)}
 
 			for _, n := range first.Friends[level] {
 				resultSet.Push(n, h.DistFunc(first.P, n.P))
@@ -214,7 +209,7 @@ func (h *Hnsw) Stats() string {
 	for i := range h.nodes {
 		levCount[h.nodes[i].Level]++
 		for j := 0; j <= h.nodes[i].Level; j++ {
-			if h.nodes[i].FriendCount() > j {
+			if h.nodes[i].FriendLevelCount() > j {
 				l := len(h.nodes[i].Friends[j])
 				conns[j] += l
 				connsC[j]++
@@ -372,7 +367,7 @@ func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosest
 			break
 		}
 
-		if c.ID.FriendCount() >= level+1 {
+		if c.ID.FriendLevelCount() >= level+1 {
 			friends := c.ID.Friends[level]
 			for _, n := range friends {
 				if !visited.Test(uint(n.Myid)) {

@@ -26,10 +26,10 @@ func (n *Node) GetFriends(level int) []*Node {
 	return n.Friends[level]
 }
 
-func (n *Node) FriendCount() int {
+func (n *Node) FriendLevelCount() int {
 	return len(n.Friends)
 }
 
-func (n *Node) FriendCountLevel(level int) int {
+func (n *Node) FriendCountAtLevel(level int) int {
 	return len(n.Friends[level])
 }
