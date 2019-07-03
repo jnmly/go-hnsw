@@ -50,7 +50,7 @@ func (h *Hnsw) Link(first, second *node.Node, level int) {
 
 	// check if we have allocated friends slices up to this level?
 	if len(first.Friends) < level+1 {
-		for j := len(first.Friends); j <= level; j++ {
+		for j := first.FriendCount(); j <= level; j++ {
 			// allocate new list with 0 elements but capacity maxL
 			elem := make([]*node.Node, 0, maxL)
 			first.Friends = append(first.Friends, elem)
@@ -64,15 +64,13 @@ func (h *Hnsw) Link(first, second *node.Node, level int) {
 		first.Friends[level] = append(first.Friends[level], second)
 	}
 
-	l := len(first.Friends[level])
-
-	if l > maxL {
+	if first.FriendCountLevel(level) > maxL {
 
 		// too many links, deal with it
 
 		switch h.DelaunayType {
 		case deluanayTypeSimple:
-			resultSet := &distqueue.DistQueueClosestLast{Size: len(first.Friends[level])}
+			resultSet := &distqueue.DistQueueClosestLast{Size: first.FriendCountLevel(level)}
 
 			for _, n := range first.Friends[level] {
 				resultSet.Push(n, h.DistFunc(first.P, n.P))
@@ -89,7 +87,7 @@ func (h *Hnsw) Link(first, second *node.Node, level int) {
 
 		case deluanayTypeHeuristic:
 
-			resultSet := &distqueue.DistQueueClosestFirst{Size: len(first.Friends[level])}
+			resultSet := &distqueue.DistQueueClosestFirst{Size: first.FriendCountLevel(level)}
 
 			for _, n := range first.Friends[level] {
 				resultSet.Push(n, h.DistFunc(first.P, n.P))
@@ -216,7 +214,7 @@ func (h *Hnsw) Stats() string {
 	for i := range h.nodes {
 		levCount[h.nodes[i].Level]++
 		for j := 0; j <= h.nodes[i].Level; j++ {
-			if len(h.nodes[i].Friends) > j {
+			if h.nodes[i].FriendCount() > j {
 				l := len(h.nodes[i].Friends[j])
 				conns[j] += l
 				connsC[j]++
@@ -374,7 +372,7 @@ func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosest
 			break
 		}
 
-		if len(c.ID.Friends) >= level+1 {
+		if c.ID.FriendCount() >= level+1 {
 			friends := c.ID.Friends[level]
 			for _, n := range friends {
 				if !visited.Test(uint(n.Myid)) {
