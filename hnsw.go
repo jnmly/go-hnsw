@@ -57,7 +57,7 @@ func (h *Hnsw) Link(first, second *node.Node, level int) {
 	}
 
 	// link with second node
-	first.Friends[level] = append(first.Friends[level], second)
+	first.Friends[level] = append(first.Friends[level], second) // HERE
 
 	if first.FriendCountAtLevel(level) > maxL {
 
@@ -80,6 +80,8 @@ func (h *Hnsw) Link(first, second *node.Node, level int) {
 				first.Friends[level][i] = item.Node
 			}
 
+			// HERE
+
 		case deluanayTypeHeuristic:
 
 			resultSet := &distqueue.DistQueueClosestFirst{Size: first.FriendCountAtLevel(level)}
@@ -95,6 +97,8 @@ func (h *Hnsw) Link(first, second *node.Node, level int) {
 				item := resultSet.Pop()
 				first.Friends[level][i] = item.Node
 			}
+
+			// HERE
 		}
 	}
 	first.Unlock()
@@ -307,7 +311,7 @@ func (h *Hnsw) Add(q node.Point, id uint32) {
 		for i := resultSet.Len() - 1; i >= 0; i-- {
 			item := resultSet.Pop()
 			// store in order, closest at index 0
-			newNode.Friends[level][i] = item.Node
+			newNode.Friends[level][i] = item.Node // HERE
 		}
 	}
 
