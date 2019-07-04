@@ -351,6 +351,8 @@ func (h *Hnsw) Remove(id uint32) {
 	deleted := h.nodes[id]
 	h.nodes = append(h.nodes[:id], h.nodes[id+1:]...)
 	deleted.UnlinkFromFriends()
+	// fix enterpoint
+	// fix maxlevel
 }
 
 func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosestLast, efConstruction int, ep *distqueue.Item, level int) {
