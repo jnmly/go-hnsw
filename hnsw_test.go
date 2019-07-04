@@ -75,10 +75,8 @@ func TestSimple(t *testing.T) {
 	h := newHnsw()
 	q, vecs := getTestdata(t)
 
-	count := 1
 	for _, v := range vecs {
-		h.Add(v, uint32(count))
-		count++
+		h.Add(v)
 	}
 
 	Search(h, q)
@@ -90,7 +88,7 @@ func TestSkip(t *testing.T) {
 
 	for i, v := range vecs {
 		if i != 500 {
-			h.Add(v, uint32(i+1))
+			h.Add(v)
 		}
 	}
 
@@ -108,15 +106,19 @@ func TestRemove(t *testing.T) {
 	h := newHnsw()
 	q, vecs := getTestdata(t)
 
+	var n *node.Node
 	for i, v := range vecs {
-		h.Add(v, uint32(i+1))
+		x := h.Add(v)
 		if i >= 497 && i <= 503 {
 			dumpState(h, i)
+		}
+		if i == 500 {
+			n = x
 		}
 	}
 
 	dumpState(h, 9998)
-	h.Remove(501)
+	h.Remove(n)
 	dumpState(h, 9999)
 
 	Search(h, q)

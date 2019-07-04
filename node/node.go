@@ -29,6 +29,7 @@ func (a Point) Size() int {
 }
 
 func NewNode(p Point, level int, friends [][]*Node) *Node {
+	// TODO: lock sequence here
 	sequence++
 	if friends != nil {
 		return &Node{P: p, Level: level, Friends: friends, id: sequence}

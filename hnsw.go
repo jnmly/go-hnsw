@@ -265,13 +265,9 @@ func (h *Hnsw) Grow(size int) {
 
 }
 
-func (h *Hnsw) Add(q node.Point, id uint32) {
+func (h *Hnsw) Add(q node.Point) *node.Node {
 	//fmt.Printf("entered Add\n")
 	//defer fmt.Printf("left Add\n")
-
-	if id == 0 {
-		panic("Id 0 is reserved, use ID:s starting from 1 when building index")
-	}
 
 	// generate random level
 	curlevel := int(math.Floor(-math.Log(rand.Float64() * h.LevelMult)))
@@ -280,7 +276,6 @@ func (h *Hnsw) Add(q node.Point, id uint32) {
 	ep := &distqueue.Item{Node: h.enterpoint, D: h.DistFunc(h.enterpoint.P, q)}
 
 	// assume Grow has been called in advance
-	newID := id
 	//newNode := &node.Node{P: q, Level: curlevel, Friends: make([][]*node.Node, min(curlevel, currentMaxLayer)+1))}
 	newNode := node.NewNode(q, curlevel, make([][]*node.Node, min(curlevel, currentMaxLayer)+1))
 
@@ -326,10 +321,7 @@ func (h *Hnsw) Add(q node.Point, id uint32) {
 
 	h.Lock()
 	// Add it and increase slice length if neccessary
-	if len(h.nodes) < int(newID)+1 {
-		h.nodes = h.nodes[0 : newID+1]
-	}
-	h.nodes[newID] = newNode
+	h.nodes = append(h.nodes, newNode)
 	h.Unlock()
 
 	// now add connections to newNode from newNodes neighbours (makes it visible in the graph)
@@ -345,16 +337,26 @@ func (h *Hnsw) Add(q node.Point, id uint32) {
 		h.enterpoint = newNode
 	}
 	h.Unlock()
+
+	return newNode
 }
 
-func (h *Hnsw) Remove(id uint32) {
+func (h *Hnsw) Remove(n *node.Node) {
 	//fmt.Printf("entered Remove\n")
 	//defer fmt.Printf("left Remove\n")
-	deleted := h.nodes[id]
-	h.nodes = append(h.nodes[:id], h.nodes[id+1:]...)
-	deleted.UnlinkFromFriends()
-	// fix enterpoint
-	// fix maxlevel
+
+	// TODO: fix speedup, no need for array here
+	for i, hn := range h.nodes {
+		if hn == n {
+			h.nodes = append(h.nodes[:i], h.nodes[i+1:]...)
+			hn.UnlinkFromFriends()
+			// fix enterpoint
+			// fix maxlevel
+			return
+		}
+	}
+
+	panic("remove missed")
 }
 
 func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosestLast, efConstruction int, ep *distqueue.Item, level int) {
