@@ -11,8 +11,8 @@ type Node struct {
 	P            Point
 	Level        int
 	Friends      [][]*Node
-	Myid         uint32
 	reverseLinks []*ReverseLink
+	id           uint
 }
 
 type ReverseLink struct {
@@ -22,8 +22,19 @@ type ReverseLink struct {
 
 type Point []float32
 
+var sequence uint
+
 func (a Point) Size() int {
 	return len(a) * 4
+}
+
+func NewNode(p Point, level int, friends [][]*Node) *Node {
+	sequence++
+	if friends != nil {
+		return &Node{P: p, Level: level, Friends: friends, id: sequence}
+	} else {
+		return &Node{Level: 0, P: p, id: sequence}
+	}
 }
 
 func (n *Node) GetFriends(level int) []*Node {
@@ -46,9 +57,6 @@ func (n *Node) AddReverseLink(other *Node, level int) {
 		n.reverseLinks = make([]*ReverseLink, 0)
 	}
 
-	//if n.Myid == 501 {
-	//	fmt.Printf("rlink %d at level %d\n", other.Myid, level)
-	//}
 	n.reverseLinks = append(n.reverseLinks,
 		&ReverseLink{othernode: other,
 			otherlevel: level,
@@ -57,15 +65,17 @@ func (n *Node) AddReverseLink(other *Node, level int) {
 }
 
 func (n *Node) UnlinkFromFriends() {
-	//fmt.Printf("UNLINK %d\n", len(n.reverseLinks))
 	for _, other := range n.reverseLinks {
 		nodes := other.othernode.Friends[other.otherlevel]
 		for j, x := range nodes {
 			if x == n {
 				// exclude me from array
-				//fmt.Printf("unlinking node %d, level %d for %d\n", n.Myid, other.otherlevel, other.othernode.Myid)
 				other.othernode.Friends[other.otherlevel] = append(other.othernode.Friends[other.otherlevel][:j], other.othernode.Friends[other.otherlevel][j+1:]...)
 			}
 		}
 	}
+}
+
+func (n *Node) GetId() uint {
+	return n.id
 }

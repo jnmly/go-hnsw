@@ -197,7 +197,8 @@ func New(M int, efConstruction int, first node.Point) *Hnsw {
 
 	// add first point, it will be our enterpoint (index 0)
 	h.nodes = make([]*node.Node, 0)
-	h.nodes = append(h.nodes, &node.Node{Level: 0, P: first})
+	//h.nodes = append(h.nodes, &node.Node{Level: 0, P: first})
+	h.nodes = append(h.nodes, node.NewNode(first, 0, nil))
 	h.enterpoint = h.nodes[0]
 
 	return &h
@@ -238,14 +239,14 @@ func (h *Hnsw) Stats() string {
 func (h *Hnsw) Print() string {
 	buf := strings.Builder{}
 
-	buf.WriteString(fmt.Sprintf("enterpoint = %p\n", h.enterpoint))
+	buf.WriteString(fmt.Sprintf("enterpoint = %d %p\n", h.enterpoint.GetId(), h.enterpoint))
 
-	for i, n := range h.nodes {
-		buf.WriteString(fmt.Sprintf("node %d %p\n", i, n))
+	for _, n := range h.nodes {
+		buf.WriteString(fmt.Sprintf("node %d %p\n", n.GetId(), n))
 		for j := range n.Friends {
 			arr := n.Friends[j]
 			for k := range arr {
-				buf.WriteString(fmt.Sprintf("     level %d friend %d = %d %p\n", j, k, n.Friends[j][k].Myid, n.Friends[j][k]))
+				buf.WriteString(fmt.Sprintf("     level %d friend %d = %d %p\n", j, k, n.Friends[j][k].GetId(), n.Friends[j][k]))
 			}
 		}
 		buf.WriteString("\n\n\n")
@@ -280,7 +281,8 @@ func (h *Hnsw) Add(q node.Point, id uint32) {
 
 	// assume Grow has been called in advance
 	newID := id
-	newNode := &node.Node{Myid: id, P: q, Level: curlevel, Friends: make([][]*node.Node, min(curlevel, currentMaxLayer)+1)}
+	//newNode := &node.Node{P: q, Level: curlevel, Friends: make([][]*node.Node, min(curlevel, currentMaxLayer)+1))}
+	newNode := node.NewNode(q, curlevel, make([][]*node.Node, min(curlevel, currentMaxLayer)+1))
 
 	// first pass, find another ep if curlevel < maxLayer
 	for level := currentMaxLayer; level > curlevel; level-- {
@@ -365,7 +367,7 @@ func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosest
 
 	candidates := &distqueue.DistQueueClosestFirst{Size: efConstruction * 3}
 
-	visited.Set(uint(ep.Node.Myid))
+	visited.Set(ep.Node.GetId())
 	//visited[ep.Node] = true
 	candidates.Push(ep.Node, ep.D)
 
@@ -383,8 +385,8 @@ func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosest
 		if c.Node.FriendLevelCount() >= level+1 {
 			friends := c.Node.Friends[level]
 			for _, n := range friends {
-				if !visited.Test(uint(n.Myid)) {
-					visited.Set(uint(n.Myid))
+				if !visited.Test(n.GetId()) {
+					visited.Set(n.GetId())
 					d := h.DistFunc(q, n.P)
 					_, topD := resultSet.Top()
 					if resultSet.Len() < efConstruction {
