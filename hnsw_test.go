@@ -1,11 +1,11 @@
 package hnsw
 
 import (
-	//"fmt"
+	"fmt"
 	"io/ioutil"
+	"os"
 	"testing"
 
-	"github.com/bradleyjkemp/cupaloy"
 	"github.com/jnmly/go-hnsw/node"
 	"github.com/stretchr/testify/assert"
 )
@@ -16,8 +16,8 @@ type Result struct {
 }
 
 const (
-	testrecords = 10
-	dimsize     = 5
+	testrecords = 1000
+	dimsize     = 128
 )
 
 func Search(h *Hnsw, q []float32) []Result {
@@ -82,7 +82,6 @@ func TestSimple(t *testing.T) {
 	}
 
 	Search(h, q)
-	cupaloy.SnapshotT(t, h.Print(), h.Stats())
 }
 
 func TestSkip(t *testing.T) {
@@ -90,13 +89,19 @@ func TestSkip(t *testing.T) {
 	q, vecs := getTestdata(t)
 
 	for i, v := range vecs {
-		if i != 5 {
+		if i != 500 {
 			h.Add(v, uint32(i+1))
 		}
 	}
 
 	Search(h, q)
-	cupaloy.SnapshotT(t, h.Print(), h.Stats())
+}
+
+func dumpState(h *Hnsw, i int) {
+	err := ioutil.WriteFile(fmt.Sprintf("/tmp/state.%d", i), []byte(h.Print()), os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func TestRemove(t *testing.T) {
@@ -105,10 +110,14 @@ func TestRemove(t *testing.T) {
 
 	for i, v := range vecs {
 		h.Add(v, uint32(i+1))
+		if i >= 497 && i <= 503 {
+			dumpState(h, i)
+		}
 	}
 
-	h.Remove(6)
+	dumpState(h, 9998)
+	h.Remove(501)
+	dumpState(h, 9999)
 
 	Search(h, q)
-	cupaloy.SnapshotT(t, h.Print(), h.Stats())
 }

@@ -28,7 +28,7 @@ type Hnsw struct {
 
 	DistFunc func([]float32, []float32) float32
 
-	nodes []node.Node
+	nodes []*node.Node
 
 	bitset *bitsetpool.BitsetPool
 
@@ -58,6 +58,7 @@ func (h *Hnsw) Link(first, second *node.Node, level int) {
 
 	// link with second node
 	first.Friends[level] = append(first.Friends[level], second) // HERE
+	second.AddReverseLink(first, level)
 
 	if first.FriendCountAtLevel(level) > maxL {
 
@@ -78,6 +79,7 @@ func (h *Hnsw) Link(first, second *node.Node, level int) {
 			for i := maxL - 1; i >= 0; i-- {
 				item := resultSet.Pop()
 				first.Friends[level][i] = item.Node
+				item.Node.AddReverseLink(first, level) // really needed?
 			}
 
 			// HERE
@@ -96,6 +98,7 @@ func (h *Hnsw) Link(first, second *node.Node, level int) {
 			for i := 0; i < maxL; i++ {
 				item := resultSet.Pop()
 				first.Friends[level][i] = item.Node
+				item.Node.AddReverseLink(first, level) // really needed?
 			}
 
 			// HERE
@@ -193,8 +196,9 @@ func New(M int, efConstruction int, first node.Point) *Hnsw {
 	h.DistFunc = f32.L2Squared8AVX
 
 	// add first point, it will be our enterpoint (index 0)
-	h.nodes = []node.Node{node.Node{Level: 0, P: first}}
-	h.enterpoint = &h.nodes[0]
+	h.nodes = make([]*node.Node, 0)
+	h.nodes = append(h.nodes, &node.Node{Level: 0, P: first})
+	h.enterpoint = h.nodes[0]
 
 	return &h
 }
@@ -234,12 +238,14 @@ func (h *Hnsw) Stats() string {
 func (h *Hnsw) Print() string {
 	buf := strings.Builder{}
 
+	buf.WriteString(fmt.Sprintf("enterpoint = %p\n", h.enterpoint))
+
 	for i, n := range h.nodes {
-		buf.WriteString(fmt.Sprintf("node %d\n", i))
+		buf.WriteString(fmt.Sprintf("node %d %p\n", i, n))
 		for j := range n.Friends {
 			arr := n.Friends[j]
 			for k := range arr {
-				buf.WriteString(fmt.Sprintf("     level %d friend %d = %d\n", j, k, n.Friends[j][k].Myid))
+				buf.WriteString(fmt.Sprintf("     level %d friend %d = %d %p\n", j, k, n.Friends[j][k].Myid, n.Friends[j][k]))
 			}
 		}
 		buf.WriteString("\n\n\n")
@@ -252,7 +258,7 @@ func (h *Hnsw) Grow(size int) {
 	if size+1 <= len(h.nodes) {
 		return
 	}
-	newNodes := make([]node.Node, len(h.nodes), size+1)
+	newNodes := make([]*node.Node, len(h.nodes), size+1)
 	copy(newNodes, h.nodes)
 	h.nodes = newNodes
 
@@ -274,7 +280,7 @@ func (h *Hnsw) Add(q node.Point, id uint32) {
 
 	// assume Grow has been called in advance
 	newID := id
-	newNode := node.Node{Myid: id, P: q, Level: curlevel, Friends: make([][]*node.Node, min(curlevel, currentMaxLayer)+1)}
+	newNode := &node.Node{Myid: id, P: q, Level: curlevel, Friends: make([][]*node.Node, min(curlevel, currentMaxLayer)+1)}
 
 	// first pass, find another ep if curlevel < maxLayer
 	for level := currentMaxLayer; level > curlevel; level-- {
@@ -312,6 +318,7 @@ func (h *Hnsw) Add(q node.Point, id uint32) {
 			item := resultSet.Pop()
 			// store in order, closest at index 0
 			newNode.Friends[level][i] = item.Node // HERE
+			item.Node.AddReverseLink(newNode, level)
 		}
 	}
 
@@ -326,14 +333,14 @@ func (h *Hnsw) Add(q node.Point, id uint32) {
 	// now add connections to newNode from newNodes neighbours (makes it visible in the graph)
 	for level := min(curlevel, currentMaxLayer); level >= 0; level-- {
 		for _, n := range newNode.Friends[level] {
-			h.Link(n, &newNode, level)
+			h.Link(n, newNode, level)
 		}
 	}
 
 	h.Lock()
 	if curlevel > h.maxLayer {
 		h.maxLayer = curlevel
-		h.enterpoint = &newNode
+		h.enterpoint = newNode
 	}
 	h.Unlock()
 }
@@ -341,9 +348,9 @@ func (h *Hnsw) Add(q node.Point, id uint32) {
 func (h *Hnsw) Remove(id uint32) {
 	//fmt.Printf("entered Remove\n")
 	//defer fmt.Printf("left Remove\n")
-	base := h.nodes[:id]
-	other := h.nodes[id+1:]
-	h.nodes = append(base, other...)
+	deleted := h.nodes[id]
+	h.nodes = append(h.nodes[:id], h.nodes[id+1:]...)
+	deleted.UnlinkFromFriends()
 }
 
 func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosestLast, efConstruction int, ep *distqueue.Item, level int) {
@@ -401,12 +408,12 @@ func (h *Hnsw) SearchBrute(q node.Point, K int) *distqueue.DistQueueClosestLast 
 	for i := 1; i < len(h.nodes); i++ {
 		d := h.DistFunc(h.nodes[i].P, q)
 		if resultSet.Len() < K {
-			resultSet.Push(&h.nodes[i], d)
+			resultSet.Push(h.nodes[i], d)
 			continue
 		}
 		_, topD := resultSet.Head()
 		if d < topD {
-			resultSet.PopAndPush(&h.nodes[i], d)
+			resultSet.PopAndPush(h.nodes[i], d)
 			continue
 		}
 	}
