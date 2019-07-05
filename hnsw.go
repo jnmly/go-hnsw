@@ -364,17 +364,29 @@ func (h *Hnsw) Remove(n *node.Node) {
 			// TODO: lock
 			h.countLevel[n.Level]--
 
-			if h.countLevel[n.Level] == 0 && h.maxLayer == n.Level {
-				h.maxLayer--
+			// Re-assign enterpoint
+			if h.enterpoint == n {
+				for layer := h.maxLayer; layer >= 0; layer-- {
+					for _, nn := range h.nodes {
+						if nn.Level == layer {
+							h.enterpoint = nn
+							break
+						}
+					}
+				}
+			}
+
+			// Delete unnecessary layers
+			for layer := h.maxLayer; layer >= 0; layer-- {
+				if h.countLevel[layer] == 0 {
+					h.maxLayer--
+				} else {
+					break
+				}
 			}
 
 			if h.enterpoint == n {
-				for _, nn := range h.nodes {
-					if nn.Level == h.maxLayer {
-						h.enterpoint = nn
-						break
-					}
-				}
+				panic("failed to reassign enterpoint")
 			}
 
 			return
