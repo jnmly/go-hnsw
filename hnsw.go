@@ -35,6 +35,8 @@ type Hnsw struct {
 	LevelMult  float64
 	maxLayer   int
 	enterpoint *node.Node
+
+	countLevel map[int]int
 }
 
 func (h *Hnsw) Link(first, second *node.Node, level int) {
@@ -201,6 +203,10 @@ func New(M int, efConstruction int, first node.Point) *Hnsw {
 	h.nodes = append(h.nodes, node.NewNode(first, 0, nil))
 	h.enterpoint = h.nodes[0]
 
+	// TODO: lock
+	h.countLevel = make(map[int]int)
+	h.countLevel[0] = 1
+
 	return &h
 }
 
@@ -229,7 +235,7 @@ func (h *Hnsw) Stats() string {
 	}
 	for i := range levCount {
 		avg := conns[i] / max(1, connsC[i])
-		s = s + fmt.Sprintf("Level %v: %v nodes, average number of connections %v\n", i, levCount[i], avg)
+		s = s + fmt.Sprintf("Level %v: %v (%d) nodes, average number of connections %v\n", i, levCount[i], h.countLevel[i], avg)
 	}
 	s = s + fmt.Sprintf("Memory use for data: %v (%v bytes / point)\n", memoryUseData, memoryUseData/len(h.nodes))
 	s = s + fmt.Sprintf("Memory use for index: %v (avg %v bytes / point)\n", memoryUseIndex, memoryUseIndex/len(h.nodes))
@@ -242,7 +248,7 @@ func (h *Hnsw) Print() string {
 	buf.WriteString(fmt.Sprintf("enterpoint = %d %p\n", h.enterpoint.GetId(), h.enterpoint))
 
 	for _, n := range h.nodes {
-		buf.WriteString(fmt.Sprintf("node %d %p\n", n.GetId(), n))
+		buf.WriteString(fmt.Sprintf("node %d, level %d, addr %p\n", n.GetId(), n.Level, n))
 		for j := range n.Friends {
 			arr := n.Friends[j]
 			for k := range arr {
@@ -278,6 +284,8 @@ func (h *Hnsw) Add(q node.Point) *node.Node {
 	// assume Grow has been called in advance
 	//newNode := &node.Node{P: q, Level: curlevel, Friends: make([][]*node.Node, min(curlevel, currentMaxLayer)+1))}
 	newNode := node.NewNode(q, curlevel, make([][]*node.Node, min(curlevel, currentMaxLayer)+1))
+	// TODO: lock
+	h.countLevel[curlevel]++
 
 	// first pass, find another ep if curlevel < maxLayer
 	for level := currentMaxLayer; level > curlevel; level-- {
@@ -351,7 +359,13 @@ func (h *Hnsw) Remove(n *node.Node) {
 			h.nodes = append(h.nodes[:i], h.nodes[i+1:]...)
 			hn.UnlinkFromFriends()
 			// fix enterpoint
-			// fix maxlevel
+
+			h.countLevel[n.Level]--
+
+			if h.countLevel[n.Level] == 0 && h.maxLayer == n.Level {
+				h.maxLayer--
+			}
+
 			return
 		}
 	}

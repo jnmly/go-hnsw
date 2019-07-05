@@ -123,3 +123,20 @@ func TestRemove(t *testing.T) {
 
 	Search(h, q)
 }
+
+func TestEnterPointRemove(t *testing.T) {
+	h := newHnsw()
+	q, vecs := getTestdata(t)
+
+	for i, v := range vecs {
+		n := h.Add(v)
+
+		if i > 4 && h.enterpoint == n && n.Level == h.maxLayer {
+			h.Remove(n)
+			break
+		}
+	}
+
+	Search(h, q)
+
+}
