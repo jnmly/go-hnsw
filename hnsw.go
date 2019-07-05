@@ -360,6 +360,7 @@ func (h *Hnsw) Remove(n *node.Node) {
 			h.nodes = append(h.nodes[:i], h.nodes[i+1:]...)
 			hn.UnlinkFromFriends()
 
+			// TODO: lock
 			h.countLevel[n.Level]--
 
 			if h.countLevel[n.Level] == 0 && h.maxLayer == n.Level {
