@@ -195,7 +195,8 @@ func New(M int, efConstruction int, first node.Point) *Hnsw {
 
 	h.bitset = bitsetpool.New()
 
-	h.DistFunc = f32.L2Squared8AVX
+	//h.DistFunc = f32.L2Squared8AVX
+	h.DistFunc = f32.L2Squared
 
 	// add first point, it will be our enterpoint (index 0)
 	h.nodes = make([]*node.Node, 0)
