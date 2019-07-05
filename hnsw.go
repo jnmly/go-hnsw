@@ -23,7 +23,6 @@ type Hnsw struct {
 	M              int
 	M0             int
 	efConstruction int
-	linkMode       int
 	DelaunayType   int
 
 	DistFunc func([]float32, []float32) float32
@@ -207,6 +206,7 @@ func New(M int, efConstruction int, first node.Point) *Hnsw {
 	// TODO: lock
 	h.countLevel = make(map[int]int)
 	h.countLevel[0] = 1
+	h.maxLayer = 0
 
 	return &h
 }
