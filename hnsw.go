@@ -356,14 +356,23 @@ func (h *Hnsw) Remove(n *node.Node) {
 	// TODO: fix speedup, no need for array here
 	for i, hn := range h.nodes {
 		if hn == n {
+
 			h.nodes = append(h.nodes[:i], h.nodes[i+1:]...)
 			hn.UnlinkFromFriends()
-			// fix enterpoint
 
 			h.countLevel[n.Level]--
 
 			if h.countLevel[n.Level] == 0 && h.maxLayer == n.Level {
 				h.maxLayer--
+			}
+
+			if h.enterpoint == n {
+				for _, nn := range h.nodes {
+					if nn.Level == h.maxLayer {
+						h.enterpoint = nn
+						break
+					}
+				}
 			}
 
 			return
