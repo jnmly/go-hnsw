@@ -82,19 +82,6 @@ func TestSimple(t *testing.T) {
 	Search(h, q)
 }
 
-func TestSkip(t *testing.T) {
-	h := newHnsw()
-	q, vecs := getTestdata(t)
-
-	for i, v := range vecs {
-		if i != 500 {
-			h.Add(v)
-		}
-	}
-
-	Search(h, q)
-}
-
 func dumpState(h *Hnsw, i int) {
 	err := ioutil.WriteFile(fmt.Sprintf("/tmp/state.%d", i), []byte(h.Print()), os.ModePerm)
 	if err != nil {
@@ -122,6 +109,16 @@ func TestRemove(t *testing.T) {
 	dumpState(h, 9999)
 
 	Search(h, q)
+
+	for _, nn := range h.nodes {
+		for level := h.maxLayer; level >= 0; level-- {
+			for _, x := range nn.GetFriends(level) {
+				if x == n {
+					t.FailNow()
+				}
+			}
+		}
+	}
 }
 
 func TestEnterPointRemove(t *testing.T) {
@@ -139,4 +136,15 @@ func TestEnterPointRemove(t *testing.T) {
 
 	Search(h, q)
 
+	found := false
+	for _, n := range h.nodes {
+		if n == h.enterpoint {
+			found = true
+			break
+		}
+	}
+
+	if !found {
+		t.Fail()
+	}
 }
