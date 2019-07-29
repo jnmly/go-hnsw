@@ -27,7 +27,7 @@ func (pq *DistQueueClosestFirst) Reset() {
 }
 
 func (pq *DistQueueClosestFirst) Reserve(n int) {
-	if n > len(pq.items)-1 {
+	if n > pq.Len() {
 		// reserve memory by setting the slice capacity
 		items2 := make([]*Item, len(pq.items), n+1)
 		copy(pq.items, items2)
@@ -59,9 +59,8 @@ func (pq *DistQueueClosestFirst) Pop() *Item {
 		return nil
 	}
 	var max = pq.items[1]
-	//pq.items[1], pq.items[len(pq.items)-1] = pq.items[len(pq.items)-1], pq.items[1]
-	pq.items[1], pq.items[len(pq.items)-1] = pq.items[len(pq.items)-1], pq.items[1]
-	pq.items = pq.items[0 : len(pq.items)-1]
+	pq.items[1], pq.items[pq.Len()] = pq.items[pq.Len()], pq.items[1]
+	pq.items = pq.items[0:pq.Len()]
 	pq.sink(1)
 	return max
 }
@@ -96,9 +95,9 @@ func (pq *DistQueueClosestFirst) swim(k int) {
 }
 
 func (pq *DistQueueClosestFirst) sink(k int) {
-	for 2*k <= len(pq.items)-1 {
+	for 2*k <= pq.Len() {
 		var j = 2 * k
-		if j < len(pq.items)-1 && (pq.items[j].D > pq.items[j+1].D) {
+		if j < pq.Len() && (pq.items[j].D > pq.items[j+1].D) {
 			j++
 		}
 		if !(pq.items[k].D > pq.items[j].D) {
@@ -123,7 +122,7 @@ func (pq *DistQueueClosestLast) Init() *DistQueueClosestLast {
 }
 
 func (pq *DistQueueClosestLast) Reserve(n int) {
-	if n > len(pq.items)-1 {
+	if n > pq.Len() {
 		// reserve memory by setting the slice capacity
 		items2 := make([]*Item, len(pq.items), n+1)
 		copy(pq.items, items2)
@@ -166,8 +165,8 @@ func (pq *DistQueueClosestLast) Pop() *Item {
 		return nil
 	}
 	var max = pq.items[1]
-	pq.items[1], pq.items[len(pq.items)-1] = pq.items[len(pq.items)-1], pq.items[1]
-	pq.items = pq.items[0 : len(pq.items)-1]
+	pq.items[1], pq.items[pq.Len()] = pq.items[pq.Len()], pq.items[1]
+	pq.items = pq.items[0:pq.Len()]
 	pq.sink(1)
 	return max
 }
@@ -203,9 +202,9 @@ func (pq *DistQueueClosestLast) swim(k int) {
 }
 
 func (pq *DistQueueClosestLast) sink(k int) {
-	for 2*k <= len(pq.items)-1 {
+	for 2*k <= pq.Len() {
 		var j = 2 * k
-		if j < len(pq.items)-1 && (pq.items[j].D < pq.items[j+1].D) {
+		if j < pq.Len() && (pq.items[j].D < pq.items[j+1].D) {
 			j++
 		}
 		if !(pq.items[k].D < pq.items[j].D) {

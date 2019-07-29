@@ -72,58 +72,72 @@ func TestKBest(t *testing.T) {
 	}
 }
 
-func TestBasic(t *testing.T) {
+func TestBasicOne(t *testing.T) {
 	pq := &DistQueueClosestFirst{}
 	pq.Push(&node.Node{}, float32(20))
 	pq.Push(&node.Node{}, float32(10))
 	pq.Push(&node.Node{}, float32(15))
+	for i := 1; i <= pq.Len(); i++ {
+		t.Logf("internal %d=%f", i, pq.items[i].D)
+	}
 	correct := []float32{10, 15, 20}
-	for i := 0; i < 3; i++ {
+	for i := 0; i < pq.Len(); i++ {
 		x := pq.Pop()
-		t.Logf("%d %f", i, x.D)
+		t.Logf("popped %d %f", i, x.D)
 		assert.Equal(t, correct[i], x.D)
+		for j, in := range pq.items {
+			if j != 0 {
+				t.Logf("internal %d=%f", j, in.D)
+			}
+		}
 	}
 }
 
-/*
-0 nil
-	add(20)
-	pg.swim(k=1)
+func TestBasicTwo(t *testing.T) {
+	pq := &DistQueueClosestFirst{}
+	pq.Push(&node.Node{}, float32(20))
+	pq.Push(&node.Node{}, float32(10))
+	pq.Push(&node.Node{}, float32(15))
+	pq.Push(&node.Node{}, float32(5))
+	for i := 1; i <= pq.Len(); i++ {
+		t.Logf("internal %d=%f", i, pq.items[i].D)
+	}
+	correct := []float32{5, 10, 15, 20}
+	for i := 0; i < pq.Len(); i++ {
+		x := pq.Pop()
+		t.Logf("popped %d %f", i, x.D)
+		assert.Equal(t, correct[i], x.D)
+		for j, in := range pq.items {
+			if j != 0 {
+				t.Logf("internal %d=%f", j, in.D)
+			}
+		}
+	}
+}
 
-0 nil
-1 20
-	add(10)
-	pg.swim(k=2)
-0 nil
-1 20
-2 10
-
-0 nil
-1 10
-2 20
-	add(15)
-	pg.swim(k=3)
-0 nil
-1 10
-2 20
-3 15
-
-0 nil
-1 10
-2 20
-3 15
-	add(5)
-	pg.swim(k=4)
-0 nil
-1 10
-2 20
-3 15
-4 5
-
-10
-5
-15
-20
-
-
-*/
+func TestBasicThree(t *testing.T) {
+	pq := &DistQueueClosestFirst{}
+	pq.Push(&node.Node{}, float32(20))
+	pq.Push(&node.Node{}, float32(10))
+	pq.Push(&node.Node{}, float32(15))
+	pq.Push(&node.Node{}, float32(5))
+	pq.Push(&node.Node{}, float32(45))
+	pq.Push(&node.Node{}, float32(75))
+	pq.Push(&node.Node{}, float32(85))
+	pq.Push(&node.Node{}, float32(95))
+	pq.Push(&node.Node{}, float32(30))
+	for i := 1; i <= pq.Len(); i++ {
+		t.Logf("internal %d=%f", i, pq.items[i].D)
+	}
+	correct := []float32{5, 10, 15, 20, 30, 45, 75, 85, 95}
+	for i := 0; i < pq.Len(); i++ {
+		x := pq.Pop()
+		t.Logf("popped %d %f", i, x.D)
+		assert.Equal(t, correct[i], x.D)
+		for j, in := range pq.items {
+			if j != 0 {
+				t.Logf("internal %d=%f", j, in.D)
+			}
+		}
+	}
+}
