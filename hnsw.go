@@ -272,6 +272,24 @@ func (h *Hnsw) Grow(size int) {
 
 }
 
+func (h *Hnsw) findBestEnterPoint(ep *distqueue.Item, q node.Point, curlevel int, maxLayer int) *distqueue.Item {
+	for level := maxLayer; level > curlevel; level-- {
+		changed := true
+		for changed {
+			changed = false
+			for _, n := range ep.Node.GetFriends(level) {
+				d := h.DistFunc(n.P, q)
+				if d < ep.D {
+					ep = &distqueue.Item{Node: n, D: d}
+					changed = true
+				}
+			}
+		}
+	}
+
+	return ep
+}
+
 func (h *Hnsw) Add(q node.Point) *node.Node {
 	//fmt.Printf("entered Add\n")
 	//defer fmt.Printf("left Add\n")
@@ -289,19 +307,7 @@ func (h *Hnsw) Add(q node.Point) *node.Node {
 	h.countLevel[curlevel]++
 
 	// first pass, find another ep if curlevel < maxLayer
-	for level := currentMaxLayer; level > curlevel; level-- {
-		changed := true
-		for changed {
-			changed = false
-			for _, n := range ep.Node.GetFriends(level) {
-				d := h.DistFunc(n.P, q)
-				if d < ep.D {
-					ep = &distqueue.Item{Node: n, D: d}
-					changed = true
-				}
-			}
-		}
-	}
+	ep = h.findBestEnterPoint(ep, q, curlevel, currentMaxLayer)
 
 	// second pass, ef = efConstruction
 	// loop through every level from the new nodes level down to level 0
@@ -474,19 +480,8 @@ func (h *Hnsw) Search(q node.Point, ef int, K int) *distqueue.DistQueueClosestLa
 
 	resultSet := &distqueue.DistQueueClosestLast{Size: ef + 1}
 	// first pass, find best ep
-	for level := currentMaxLayer; level > 0; level-- {
-		changed := true
-		for changed {
-			changed = false
-			for _, n := range ep.Node.GetFriends(level) {
-				d := h.DistFunc(n.P, q)
-				if d < ep.D {
-					ep.Node, ep.D = n, d
-					changed = true
-				}
-			}
-		}
-	}
+	ep = h.findBestEnterPoint(ep, q, 0, currentMaxLayer)
+
 	h.searchAtLayer(q, resultSet, ef, ep, 0)
 
 	for resultSet.Len() > K {
