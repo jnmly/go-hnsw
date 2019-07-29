@@ -3,6 +3,8 @@ package distqueue
 import (
 	"math/rand"
 	"testing"
+
+	"github.com/jnmly/go-hnsw/node"
 )
 
 func TestQueue(t *testing.T) {
@@ -10,7 +12,9 @@ func TestQueue(t *testing.T) {
 	pq := &DistQueueClosestFirst{}
 
 	for i := 0; i < 10; i++ {
-		pq.Push(rand.Uint32(), float32(rand.Float64()))
+		pq.Push(
+			&node.Node{},
+			float32(rand.Float64()))
 	}
 
 	t.Log("Closest first, pop")
@@ -31,7 +35,7 @@ func TestQueue(t *testing.T) {
 	pq2.Init()
 	pq2.Reserve(200) // try reserve
 	for i := 0; i < 10; i++ {
-		pq2.Push(rand.Uint32(), float32(rand.Float64()))
+		pq2.Push(&node.Node{}, float32(rand.Float64()))
 	}
 	t.Log("Closest last, pop")
 	for !pq2.Empty() {
@@ -49,7 +53,7 @@ func TestKBest(t *testing.T) {
 	pq := &DistQueueClosestFirst{}
 	pq.Reserve(5) // reserve less than needed
 	for i := 0; i < 20; i++ {
-		pq.Push(rand.Uint32(), rand.Float32())
+		pq.Push(&node.Node{}, rand.Float32())
 	}
 
 	// return K best matches, ordered as best first
