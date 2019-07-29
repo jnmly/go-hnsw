@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/jnmly/go-hnsw/node"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestQueue(t *testing.T) {
@@ -70,3 +71,59 @@ func TestKBest(t *testing.T) {
 		t.Logf("%+v", res[i])
 	}
 }
+
+func TestBasic(t *testing.T) {
+	pq := &DistQueueClosestFirst{}
+	pq.Push(&node.Node{}, float32(20))
+	pq.Push(&node.Node{}, float32(10))
+	pq.Push(&node.Node{}, float32(15))
+	correct := []float32{10, 15, 20}
+	for i := 0; i < 3; i++ {
+		x := pq.Pop()
+		t.Logf("%d %f", i, x.D)
+		assert.Equal(t, correct[i], x.D)
+	}
+}
+
+/*
+0 nil
+	add(20)
+	pg.swim(k=1)
+
+0 nil
+1 20
+	add(10)
+	pg.swim(k=2)
+0 nil
+1 20
+2 10
+
+0 nil
+1 10
+2 20
+	add(15)
+	pg.swim(k=3)
+0 nil
+1 10
+2 20
+3 15
+
+0 nil
+1 10
+2 20
+3 15
+	add(5)
+	pg.swim(k=4)
+0 nil
+1 10
+2 20
+3 15
+4 5
+
+10
+5
+15
+20
+
+
+*/

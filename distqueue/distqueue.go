@@ -25,9 +25,7 @@ func (pq *DistQueueClosestFirst) Init() *DistQueueClosestFirst {
 func (pq *DistQueueClosestFirst) Reset() {
 	pq.items = pq.items[0:1]
 }
-func (pq *DistQueueClosestFirst) Items() []*Item {
-	return pq.items[1:]
-}
+
 func (pq *DistQueueClosestFirst) Reserve(n int) {
 	if n > len(pq.items)-1 {
 		// reserve memory by setting the slice capacity
@@ -124,9 +122,6 @@ func (pq *DistQueueClosestLast) Init() *DistQueueClosestLast {
 	return pq
 }
 
-func (pq *DistQueueClosestLast) Items() []*Item {
-	return pq.items[1:]
-}
 func (pq *DistQueueClosestLast) Reserve(n int) {
 	if n > len(pq.items)-1 {
 		// reserve memory by setting the slice capacity
