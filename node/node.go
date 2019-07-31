@@ -7,7 +7,6 @@ import (
 
 type Node struct {
 	sync.RWMutex
-	locked       bool
 	P            Point
 	Level        int
 	Friends      [][]*Node
