@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/jnmly/go-hnsw/node"
 	"github.com/stretchr/testify/assert"
@@ -147,4 +148,21 @@ func TestEnterPointRemove(t *testing.T) {
 	if !found {
 		t.Fail()
 	}
+}
+
+func TestSave(t *testing.T) {
+	h := newHnsw()
+	_, vecs := getTestdata(t)
+
+	for _, v := range vecs {
+		h.Add(v)
+	}
+
+	fmt.Printf("now save..\n")
+	t0 := time.Now()
+	fwork := h.toFramework()
+	data, err := fwork.Marshal()
+	assert.NoError(t, err)
+
+	fmt.Printf("save framework took %v for %d nodes, size = %d\n", time.Since(t0), len(h.nodes), len(data))
 }

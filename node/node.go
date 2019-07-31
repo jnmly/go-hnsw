@@ -10,13 +10,13 @@ type Node struct {
 	P            Point
 	Level        int
 	Friends      [][]*Node
-	reverseLinks []*reverseLink
+	ReverseLinks []*reverseLink
 	id           uint
 }
 
 type reverseLink struct {
-	othernode  *Node
-	otherlevel int
+	Othernode  *Node
+	Otherlevel int
 }
 
 type Point []float32
@@ -51,24 +51,24 @@ func (n *Node) FriendCountAtLevel(level int) int {
 }
 
 func (n *Node) AddReverseLink(other *Node, level int) {
-	if n.reverseLinks == nil {
-		n.reverseLinks = make([]*reverseLink, 0)
+	if n.ReverseLinks == nil {
+		n.ReverseLinks = make([]*reverseLink, 0)
 	}
 
-	n.reverseLinks = append(n.reverseLinks,
-		&reverseLink{othernode: other,
-			otherlevel: level,
+	n.ReverseLinks = append(n.ReverseLinks,
+		&reverseLink{Othernode: other,
+			Otherlevel: level,
 		},
 	)
 }
 
 func (n *Node) UnlinkFromFriends() {
-	for _, other := range n.reverseLinks {
-		nodes := other.othernode.Friends[other.otherlevel]
+	for _, other := range n.ReverseLinks {
+		nodes := other.Othernode.Friends[other.Otherlevel]
 		for j, x := range nodes {
 			if x == n {
 				// exclude me from array
-				other.othernode.Friends[other.otherlevel] = append(other.othernode.Friends[other.otherlevel][:j], other.othernode.Friends[other.otherlevel][j+1:]...)
+				other.Othernode.Friends[other.Otherlevel] = append(other.Othernode.Friends[other.Otherlevel][:j], other.Othernode.Friends[other.Otherlevel][j+1:]...)
 			}
 		}
 	}
