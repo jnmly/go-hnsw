@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/jnmly/go-hnsw/node"
 	"github.com/stretchr/testify/assert"
@@ -78,7 +79,9 @@ func TestSimple(t *testing.T) {
 		h.Add(v)
 	}
 
+	t0 := time.Now()
 	Search(h, q)
+	t.Logf("searchtime = %v", time.Since(t0))
 }
 
 func dumpState(h *Hnsw, i int) {

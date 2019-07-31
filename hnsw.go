@@ -348,11 +348,10 @@ func (h *Hnsw) Add(q node.Point) *node.Node {
 	return newNode
 }
 
-func (h *Hnsw) Remove(n *node.Node) {
+func (h *Hnsw) Remove(indexToRemove node.NodeRef) {
 	//fmt.Printf("entered Remove\n")
 	//defer fmt.Printf("left Remove\n")
 
-	indexToRemove := n.GetId()
 	h.Lock()
 	hn := h.nodes[indexToRemove]
 	delete(h.nodes, indexToRemove)
