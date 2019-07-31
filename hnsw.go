@@ -451,26 +451,6 @@ func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosest
 	h.bitset.Free(pool)
 }
 
-// SearchBrute returns the true K nearest neigbours to search point q
-func (h *Hnsw) SearchBrute(q node.Point, K int) *distqueue.DistQueueClosestLast {
-	//fmt.Printf("entered SearchBrute\n")
-	//defer fmt.Printf("left SearchBrute\n")
-	resultSet := &distqueue.DistQueueClosestLast{Size: K}
-	for i := 1; i < len(h.nodes); i++ {
-		d := h.DistFunc(h.nodes[i].P, q)
-		if resultSet.Len() < K {
-			resultSet.Push(h.nodes[i], d)
-			continue
-		}
-		_, topD := resultSet.Head()
-		if d < topD {
-			resultSet.PopAndPush(h.nodes[i], d)
-			continue
-		}
-	}
-	return resultSet
-}
-
 func (h *Hnsw) Search(q node.Point, ef int, K int) *distqueue.DistQueueClosestLast {
 	//fmt.Printf("entered Search\n")
 	//defer fmt.Printf("left Search\n")
