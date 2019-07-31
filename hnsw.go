@@ -274,8 +274,8 @@ func (h *Hnsw) Grow(size int) {
 
 func (h *Hnsw) findBestEnterPoint(ep *distqueue.Item, q node.Point, curlevel int, maxLayer int) *distqueue.Item {
 	for level := maxLayer; level > curlevel; level-- {
-		changed := true
-		for changed {
+		// js: start search at the least granular level
+		for changed := true; changed; {
 			changed = false
 			for _, n := range ep.Node.GetFriends(level) {
 				d := h.DistFunc(n.P, q)
