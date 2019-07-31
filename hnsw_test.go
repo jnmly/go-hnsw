@@ -66,7 +66,6 @@ func newHnsw() *Hnsw {
 
 	var zero node.Point = make([]float32, dimsize)
 	h := New(cfgM, cfgEfConstruction, zero)
-	h.Grow(testrecords)
 
 	return h
 }

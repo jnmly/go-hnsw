@@ -200,3 +200,13 @@ func (h *Hnsw) SearchBrute(q node.Point, K int) *distqueue.DistQueueClosestLast 
 	return resultSet
 }
 
+func (h *Hnsw) Grow(size int) {
+	if size+1 <= len(h.nodes) {
+		return
+	}
+	newNodes := make([]*node.Node, len(h.nodes), size+1)
+	copy(newNodes, h.nodes)
+	h.nodes = newNodes
+
+}
+

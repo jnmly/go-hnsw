@@ -264,16 +264,6 @@ func (h *Hnsw) Print() string {
 	return buf.String()
 }
 
-func (h *Hnsw) Grow(size int) {
-	if size+1 <= len(h.nodes) {
-		return
-	}
-	newNodes := make([]*node.Node, len(h.nodes), size+1)
-	copy(newNodes, h.nodes)
-	h.nodes = newNodes
-
-}
-
 func (h *Hnsw) findBestEnterPoint(ep *distqueue.Item, q node.Point, curlevel int, maxLayer int) *distqueue.Item {
 	for level := maxLayer; level > curlevel; level-- {
 		// js: start search at the least granular level
