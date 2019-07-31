@@ -12,7 +12,7 @@ import (
 )
 
 type Result struct {
-	Node     *node.Node
+	Node     node.NodeRef
 	Distance float32
 }
 
@@ -112,7 +112,7 @@ func TestRemove(t *testing.T) {
 	for _, nn := range h.nodes {
 		for level := h.maxLayer; level >= 0; level-- {
 			for _, x := range nn.GetFriends(level) {
-				if x == n {
+				if h.nodes[x] == n {
 					t.FailNow()
 				}
 			}
