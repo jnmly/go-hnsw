@@ -22,19 +22,17 @@ type ReverseLink struct {
 
 type Point []float32
 
-var sequence uint
-
 func (a Point) Size() int {
 	return len(a) * 4
 }
 
-func NewNode(p Point, level int, friends [][]*Node) *Node {
+func NewNode(p Point, level int, friends [][]*Node, sequence *uint) *Node {
 	// TODO: lock sequence here
-	sequence++
+	*sequence = *sequence + 1
 	if friends != nil {
-		return &Node{P: p, Level: level, Friends: friends, id: sequence}
+		return &Node{P: p, Level: level, Friends: friends, id: *sequence}
 	} else {
-		return &Node{Level: 0, P: p, id: sequence}
+		return &Node{Level: 0, P: p, id: *sequence}
 	}
 }
 

@@ -36,6 +36,7 @@ type Hnsw struct {
 	enterpoint *node.Node
 
 	countLevel map[int]int
+	sequence   uint
 }
 
 func (h *Hnsw) Link(first, second *node.Node, level int) {
@@ -200,13 +201,14 @@ func New(M int, efConstruction int, first node.Point) *Hnsw {
 	// add first point, it will be our enterpoint (index 0)
 	h.nodes = make([]*node.Node, 0)
 	//h.nodes = append(h.nodes, &node.Node{Level: 0, P: first})
-	h.nodes = append(h.nodes, node.NewNode(first, 0, nil))
+	h.nodes = append(h.nodes, node.NewNode(first, 0, nil, &h.sequence))
 	h.enterpoint = h.nodes[0]
 
 	// TODO: lock
 	h.countLevel = make(map[int]int)
 	h.countLevel[0] = 1
 	h.maxLayer = 0
+	h.sequence = 0
 
 	return &h
 }
@@ -302,7 +304,7 @@ func (h *Hnsw) Add(q node.Point) *node.Node {
 
 	// assume Grow has been called in advance
 	//newNode := &node.Node{P: q, Level: curlevel, Friends: make([][]*node.Node, min(curlevel, currentMaxLayer)+1))}
-	newNode := node.NewNode(q, curlevel, make([][]*node.Node, min(curlevel, currentMaxLayer)+1))
+	newNode := node.NewNode(q, curlevel, make([][]*node.Node, min(curlevel, currentMaxLayer)+1), &h.sequence)
 	// TODO: lock
 	h.countLevel[curlevel]++
 
