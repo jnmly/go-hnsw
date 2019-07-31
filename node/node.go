@@ -10,28 +10,27 @@ type Node struct {
 	P            Point
 	Level        int
 	Friends      [][]*Node
-	reverseLinks []*reverseLink
-	id           uint
+	reverseLinks []*link
+	id           NodeRef
 }
 
-type reverseLink struct {
+type link struct {
 	othernode  *Node
 	otherlevel int
 }
 
 type Point []float32
+type NodeRef uint64
 
 func (a Point) Size() int {
 	return len(a) * 4
 }
 
-func NewNode(p Point, level int, friends [][]*Node, sequence *uint) *Node {
-	// TODO: lock sequence here
-	*sequence = *sequence + 1
+func NewNode(p Point, level int, friends [][]*Node, id NodeRef) *Node {
 	if friends != nil {
-		return &Node{P: p, Level: level, Friends: friends, id: *sequence}
+		return &Node{P: p, Level: level, Friends: friends, id: id}
 	} else {
-		return &Node{Level: 0, P: p, id: *sequence}
+		return &Node{Level: 0, P: p, id: id}
 	}
 }
 
@@ -52,11 +51,12 @@ func (n *Node) FriendCountAtLevel(level int) int {
 
 func (n *Node) AddReverseLink(other *Node, level int) {
 	if n.reverseLinks == nil {
-		n.reverseLinks = make([]*reverseLink, 0)
+		n.reverseLinks = make([]*link, 0)
 	}
 
 	n.reverseLinks = append(n.reverseLinks,
-		&reverseLink{othernode: other,
+		&link{
+			othernode:  other,
 			otherlevel: level,
 		},
 	)
@@ -74,6 +74,6 @@ func (n *Node) UnlinkFromFriends() {
 	}
 }
 
-func (n *Node) GetId() uint {
+func (n *Node) GetId() NodeRef {
 	return n.id
 }

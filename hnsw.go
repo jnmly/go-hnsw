@@ -27,16 +27,16 @@ type Hnsw struct {
 
 	DistFunc func([]float32, []float32) float32
 
-	nodes []*node.Node
+	nodes map[node.NodeRef]*node.Node
 
 	bitset *bitsetpool.BitsetPool
 
 	LevelMult  float64
 	maxLayer   int
-	enterpoint *node.Node
+	enterpoint node.NodeRef
 
 	countLevel map[int]int
-	sequence   uint
+	sequence   node.NodeRef
 }
 
 func (h *Hnsw) Link(first, second *node.Node, level int) {
@@ -199,16 +199,16 @@ func New(M int, efConstruction int, first node.Point) *Hnsw {
 	h.DistFunc = f32.L2Squared
 
 	// add first point, it will be our enterpoint (index 0)
-	h.nodes = make([]*node.Node, 0)
-	//h.nodes = append(h.nodes, &node.Node{Level: 0, P: first})
-	h.nodes = append(h.nodes, node.NewNode(first, 0, nil, &h.sequence))
-	h.enterpoint = h.nodes[0]
+	h.nodes = make(map[node.NodeRef]*node.Node)
+	firstnode := node.NewNode(first, 0, nil, 0)
+	h.nodes[0] = firstnode
+	h.enterpoint = node.NodeRef(0)
 
 	// TODO: lock
 	h.countLevel = make(map[int]int)
 	h.countLevel[0] = 1
 	h.maxLayer = 0
-	h.sequence = 0
+	h.sequence = 1
 
 	return &h
 }
@@ -248,14 +248,13 @@ func (h *Hnsw) Stats() string {
 func (h *Hnsw) Print() string {
 	buf := strings.Builder{}
 
-	buf.WriteString(fmt.Sprintf("enterpoint = %d %p\n", h.enterpoint.GetId(), h.enterpoint))
+	buf.WriteString(fmt.Sprintf("enterpoint = %d %p\n", h.enterpoint, h.nodes[h.enterpoint]))
 
-	for _, n := range h.nodes {
-		buf.WriteString(fmt.Sprintf("node %d, level %d, addr %p\n", n.GetId(), n.Level, n))
-		for j := range n.Friends {
-			arr := n.Friends[j]
-			for k := range arr {
-				buf.WriteString(fmt.Sprintf("     level %d friend %d = %d %p\n", j, k, n.Friends[j][k].GetId(), n.Friends[j][k]))
+	for i, n := range h.nodes {
+		buf.WriteString(fmt.Sprintf("node %d, level %d, addr %p\n", i, n.Level, n))
+		for j, arr := range n.Friends {
+			for k, f := range arr {
+				buf.WriteString(fmt.Sprintf("     level %d friend %d = %p\n", j, k, f))
 			}
 		}
 		buf.WriteString("\n\n\n")
@@ -289,11 +288,13 @@ func (h *Hnsw) Add(q node.Point) *node.Node {
 	// generate random level
 	curlevel := int(math.Floor(-math.Log(rand.Float64() * h.LevelMult)))
 
-	currentMaxLayer := h.enterpoint.Level
-	ep := &distqueue.Item{Node: h.enterpoint, D: h.DistFunc(h.enterpoint.P, q)}
+	currentMaxLayer := h.nodes[h.enterpoint].Level
+	ep := &distqueue.Item{Node: h.nodes[h.enterpoint], D: h.DistFunc(h.nodes[h.enterpoint].P, q)}
 
 	//newNode := &node.Node{P: q, Level: curlevel, Friends: make([][]*node.Node, min(curlevel, currentMaxLayer)+1))}
-	newNode := node.NewNode(q, curlevel, make([][]*node.Node, min(curlevel, currentMaxLayer)+1), &h.sequence)
+	indexForNewNode := h.sequence
+	h.sequence++
+	newNode := node.NewNode(q, curlevel, make([][]*node.Node, min(curlevel, currentMaxLayer)+1), indexForNewNode)
 	// TODO: lock
 	h.countLevel[curlevel]++
 
@@ -327,7 +328,7 @@ func (h *Hnsw) Add(q node.Point) *node.Node {
 
 	h.Lock()
 	// Add it and increase slice length if neccessary
-	h.nodes = append(h.nodes, newNode)
+	h.nodes[node.NodeRef(indexForNewNode)] = newNode
 	h.Unlock()
 
 	// now add connections to newNode from newNodes neighbours (makes it visible in the graph)
@@ -340,7 +341,7 @@ func (h *Hnsw) Add(q node.Point) *node.Node {
 	h.Lock()
 	if curlevel > h.maxLayer {
 		h.maxLayer = curlevel
-		h.enterpoint = newNode
+		h.enterpoint = node.NodeRef(indexForNewNode)
 	}
 	h.Unlock()
 
@@ -351,46 +352,41 @@ func (h *Hnsw) Remove(n *node.Node) {
 	//fmt.Printf("entered Remove\n")
 	//defer fmt.Printf("left Remove\n")
 
+	indexToRemove := n.GetId()
+	hn := h.nodes[indexToRemove]
+	delete(h.nodes, indexToRemove)
+
 	// TODO: fix speedup, no need for array here
-	for i, hn := range h.nodes {
-		if hn == n {
 
-			h.nodes = append(h.nodes[:i], h.nodes[i+1:]...)
-			hn.UnlinkFromFriends()
+	hn.UnlinkFromFriends()
 
-			// TODO: lock
-			h.countLevel[n.Level]--
+	// TODO: lock
+	h.countLevel[hn.Level]--
 
-			// Re-assign enterpoint
-			if h.enterpoint == n {
-				for layer := h.maxLayer; layer >= 0; layer-- {
-					for _, nn := range h.nodes {
-						if nn.Level == layer {
-							h.enterpoint = nn
-							break
-						}
-					}
-				}
-			}
-
-			// Delete unnecessary layers
-			for layer := h.maxLayer; layer >= 0; layer-- {
-				if h.countLevel[layer] == 0 {
-					h.maxLayer--
-				} else {
+	// Re-assign enterpoint
+	if h.enterpoint == indexToRemove {
+		for layer := h.maxLayer; layer >= 0; layer-- {
+			for i, nn := range h.nodes {
+				if nn.Level == layer {
+					h.enterpoint = i
 					break
 				}
 			}
-
-			if h.enterpoint == n {
-				panic("failed to reassign enterpoint")
-			}
-
-			return
 		}
 	}
 
-	panic("remove missed")
+	// Delete unnecessary layers
+	for layer := h.maxLayer; layer >= 0; layer-- {
+		if h.countLevel[layer] == 0 {
+			h.maxLayer--
+		} else {
+			break
+		}
+	}
+
+	if h.enterpoint == indexToRemove {
+		panic("failed to reassign enterpoint")
+	}
 }
 
 func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosestLast, efConstruction int, ep *distqueue.Item, level int) {
@@ -403,7 +399,7 @@ func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosest
 
 	candidates := &distqueue.DistQueueClosestFirst{Size: efConstruction * 3}
 
-	visited.Set(ep.Node.GetId())
+	visited.Set(uint(ep.Node.GetId()))
 	//visited[ep.Node] = true
 	candidates.Push(ep.Node, ep.D)
 
@@ -421,8 +417,8 @@ func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosest
 		if c.Node.FriendLevelCount() >= level+1 {
 			friends := c.Node.Friends[level]
 			for _, n := range friends {
-				if !visited.Test(n.GetId()) {
-					visited.Set(n.GetId())
+				if !visited.Test(uint(n.GetId())) {
+					visited.Set(uint(n.GetId()))
 					d := h.DistFunc(q, n.P)
 					_, topD := resultSet.Top()
 					if resultSet.Len() < efConstruction {
@@ -446,7 +442,7 @@ func (h *Hnsw) Search(q node.Point, ef int, K int) *distqueue.DistQueueClosestLa
 
 	h.RLock()
 	currentMaxLayer := h.maxLayer
-	ep := &distqueue.Item{Node: h.enterpoint, D: h.DistFunc(h.enterpoint.P, q)}
+	ep := &distqueue.Item{Node: h.nodes[h.enterpoint], D: h.DistFunc(h.nodes[h.enterpoint].P, q)}
 	h.RUnlock()
 
 	resultSet := &distqueue.DistQueueClosestLast{Size: ef + 1}

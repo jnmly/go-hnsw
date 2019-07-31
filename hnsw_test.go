@@ -92,19 +92,16 @@ func TestRemove(t *testing.T) {
 	h := newHnsw()
 	q, vecs := getTestdata(t)
 
-	var n *node.Node
 	for i, v := range vecs {
-		x := h.Add(v)
+		h.Add(v)
 		if i >= 497 && i <= 503 {
 			dumpState(h, i)
-		}
-		if i == 500 {
-			n = x
 		}
 	}
 
 	dumpState(h, 9998)
-	h.Remove(n)
+	n := h.nodes[500]
+	h.Remove(500)
 	dumpState(h, 9999)
 
 	Search(h, q)
@@ -127,8 +124,8 @@ func TestEnterPointRemove(t *testing.T) {
 	for i, v := range vecs {
 		n := h.Add(v)
 
-		if i > 4 && h.enterpoint == n && n.Level == h.maxLayer {
-			h.Remove(n)
+		if i > 4 && h.enterpoint == n.GetId() && n.Level == h.maxLayer {
+			h.Remove(n.GetId())
 			break
 		}
 	}
@@ -136,8 +133,8 @@ func TestEnterPointRemove(t *testing.T) {
 	Search(h, q)
 
 	found := false
-	for _, n := range h.nodes {
-		if n == h.enterpoint {
+	for i, _ := range h.nodes {
+		if i == h.enterpoint {
 			found = true
 			break
 		}
