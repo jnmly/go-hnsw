@@ -11,11 +11,11 @@ type Node struct {
 	P            Point
 	Level        int
 	Friends      [][]*Node
-	reverseLinks []*ReverseLink
+	reverseLinks []*reverseLink
 	id           uint
 }
 
-type ReverseLink struct {
+type reverseLink struct {
 	othernode  *Node
 	otherlevel int
 }
@@ -53,11 +53,11 @@ func (n *Node) FriendCountAtLevel(level int) int {
 
 func (n *Node) AddReverseLink(other *Node, level int) {
 	if n.reverseLinks == nil {
-		n.reverseLinks = make([]*ReverseLink, 0)
+		n.reverseLinks = make([]*reverseLink, 0)
 	}
 
 	n.reverseLinks = append(n.reverseLinks,
-		&ReverseLink{othernode: other,
+		&reverseLink{othernode: other,
 			otherlevel: level,
 		},
 	)
