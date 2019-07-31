@@ -292,7 +292,6 @@ func (h *Hnsw) Add(q node.Point) *node.Node {
 	currentMaxLayer := h.enterpoint.Level
 	ep := &distqueue.Item{Node: h.enterpoint, D: h.DistFunc(h.enterpoint.P, q)}
 
-	// assume Grow has been called in advance
 	//newNode := &node.Node{P: q, Level: curlevel, Friends: make([][]*node.Node, min(curlevel, currentMaxLayer)+1))}
 	newNode := node.NewNode(q, curlevel, make([][]*node.Node, min(curlevel, currentMaxLayer)+1), &h.sequence)
 	// TODO: lock
