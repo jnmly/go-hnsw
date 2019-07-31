@@ -27,7 +27,7 @@ type Hnsw struct {
 
 	DistFunc func([]float32, []float32) float32
 
-	nodes map[node.NodeRef]*node.Node
+	nodes map[node.NodeRef]*node.Node // TODO: locking
 
 	bitset *bitsetpool.BitsetPool
 
@@ -353,8 +353,10 @@ func (h *Hnsw) Remove(n *node.Node) {
 	//defer fmt.Printf("left Remove\n")
 
 	indexToRemove := n.GetId()
+	h.Lock()
 	hn := h.nodes[indexToRemove]
 	delete(h.nodes, indexToRemove)
+	h.Unlock()
 
 	// TODO: fix speedup, no need for array here
 
