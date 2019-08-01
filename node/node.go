@@ -10,8 +10,8 @@ type Node struct {
 	P            Point
 	Level        uint64
 	Friends      map[uint64]*LinkList
-	reverseLinks map[uint64]*linkMap
-	id           NodeRef
+	ReverseLinks map[uint64]*linkMap
+	Id           NodeRef
 }
 
 type LinkList struct {
@@ -34,8 +34,8 @@ func NewNode(p Point, level uint64, id NodeRef) *Node {
 		P:            p,
 		Level:        level,
 		Friends:      make(map[uint64]*LinkList),
-		reverseLinks: make(map[uint64]*linkMap),
-		id:           id,
+		ReverseLinks: make(map[uint64]*linkMap),
+		Id:           id,
 	}
 }
 
@@ -69,16 +69,16 @@ func (n *Node) FriendCountAtLevel(level uint64) uint64 {
 }
 
 func (n *Node) AddReverseLink(other NodeRef, level uint64) {
-	if n.reverseLinks[level] == nil {
-		n.reverseLinks[level] = &linkMap{
+	if n.ReverseLinks[level] == nil {
+		n.ReverseLinks[level] = &linkMap{
 			Nodes: make(map[NodeRef]bool),
 		}
 	}
-	n.reverseLinks[level].Nodes[other] = true
+	n.ReverseLinks[level].Nodes[other] = true
 }
 
 func (n *Node) UnlinkFromFriends(allnodes map[NodeRef]*Node) {
-	for level, m := range n.reverseLinks {
+	for level, m := range n.ReverseLinks {
 		for node, _ := range m.Nodes {
 			xother := allnodes[node]
 			if xother == nil {
@@ -96,5 +96,5 @@ func (n *Node) UnlinkFromFriends(allnodes map[NodeRef]*Node) {
 }
 
 func (n *Node) GetId() NodeRef {
-	return n.id
+	return n.Id
 }

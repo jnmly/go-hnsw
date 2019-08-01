@@ -22,21 +22,21 @@ type Hnsw struct {
 	sync.RWMutex
 	M              uint64
 	M0             uint64
-	efConstruction uint64
+	EfConstruction uint64
 	DelaunayType   uint64
 
 	DistFunc func([]float32, []float32) float32
 
-	nodes map[node.NodeRef]*node.Node // TODO: locking
+	Nodes map[node.NodeRef]*node.Node // TODO: locking
 
 	bitset *bitsetpool.BitsetPool
 
 	LevelMult  float64
-	maxLayer   uint64
-	enterpoint node.NodeRef
+	MaxLayer   uint64
+	Enterpoint node.NodeRef
 
-	countLevel map[uint64]uint64
-	sequence   node.NodeRef
+	CountLevel map[uint64]uint64
+	Sequence   node.NodeRef
 }
 
 func (h *Hnsw) Link(first *node.Node, second node.NodeRef, level uint64) {
@@ -57,7 +57,7 @@ func (h *Hnsw) Link(first *node.Node, second node.NodeRef, level uint64) {
 
 	// link with second node
 	first.Friends[level].Nodes = append(first.Friends[level].Nodes, second) // HERE
-	h.nodes[second].AddReverseLink(first.GetId(), level)
+	h.Nodes[second].AddReverseLink(first.GetId(), level)
 
 	if first.FriendCountAtLevel(level) > maxL {
 
@@ -68,7 +68,7 @@ func (h *Hnsw) Link(first *node.Node, second node.NodeRef, level uint64) {
 			resultSet := &distqueue.DistQueueClosestLast{Size: first.FriendCountAtLevel(level)}
 
 			for _, n := range first.Friends[level].Nodes {
-				resultSet.Push(n, h.DistFunc(first.P, h.nodes[n].P))
+				resultSet.Push(n, h.DistFunc(first.P, h.Nodes[n].P))
 			}
 			for resultSet.Len() > maxL {
 				resultSet.Pop()
@@ -78,7 +78,7 @@ func (h *Hnsw) Link(first *node.Node, second node.NodeRef, level uint64) {
 			for i := maxL - 1; i >= 0; i-- {
 				item := resultSet.Pop()
 				first.Friends[level].Nodes[i] = item.Node
-				h.nodes[item.Node].AddReverseLink(first.GetId(), level) // really needed?
+				h.Nodes[item.Node].AddReverseLink(first.GetId(), level) // really needed?
 			}
 
 			// TODO: cleanup old reverse links
@@ -90,7 +90,7 @@ func (h *Hnsw) Link(first *node.Node, second node.NodeRef, level uint64) {
 			resultSet := &distqueue.DistQueueClosestFirst{Size: first.FriendCountAtLevel(level)}
 
 			for _, n := range first.Friends[level].Nodes {
-				resultSet.Push(n, h.DistFunc(first.P, h.nodes[n].P))
+				resultSet.Push(n, h.DistFunc(first.P, h.Nodes[n].P))
 			}
 			h.getNeighborsByHeuristicClosestFirst(resultSet, maxL)
 
@@ -99,7 +99,7 @@ func (h *Hnsw) Link(first *node.Node, second node.NodeRef, level uint64) {
 			for i := uint64(0); i < maxL; i++ {
 				item := resultSet.Pop()
 				first.Friends[level].Nodes[i] = item.Node
-				h.nodes[item.Node].AddReverseLink(first.GetId(), level) // really needed?
+				h.Nodes[item.Node].AddReverseLink(first.GetId(), level) // really needed?
 			}
 
 			// TODO: cleanup old reverse links
@@ -129,7 +129,7 @@ func (h *Hnsw) getNeighborsByHeuristicClosestLast(resultSet1 *distqueue.DistQueu
 		e := resultSet.Pop()
 		good := true
 		for _, r := range result {
-			if h.DistFunc(h.nodes[r.Node].P, h.nodes[e.Node].P) < e.D {
+			if h.DistFunc(h.Nodes[r.Node].P, h.Nodes[e.Node].P) < e.D {
 				good = false
 				break
 			}
@@ -163,7 +163,7 @@ func (h *Hnsw) getNeighborsByHeuristicClosestFirst(resultSet *distqueue.DistQueu
 		e := resultSet.Pop()
 		good := true
 		for _, r := range result {
-			if h.DistFunc(h.nodes[r.Node].P, h.nodes[e.Node].P) < e.D {
+			if h.DistFunc(h.Nodes[r.Node].P, h.Nodes[e.Node].P) < e.D {
 				good = false
 				break
 			}
@@ -190,7 +190,7 @@ func New(M uint64, efConstruction uint64, first node.Point) *Hnsw {
 	h.M = M
 	// default values used in c++ implementation
 	h.LevelMult = 1 / math.Log(float64(M))
-	h.efConstruction = efConstruction
+	h.EfConstruction = efConstruction
 	h.M0 = 2 * M
 	h.DelaunayType = deluanayTypeHeuristic
 
@@ -200,58 +200,58 @@ func New(M uint64, efConstruction uint64, first node.Point) *Hnsw {
 	h.DistFunc = f32.L2Squared
 
 	// add first point, it will be our enterpoint (index 0)
-	h.nodes = make(map[node.NodeRef]*node.Node)
+	h.Nodes = make(map[node.NodeRef]*node.Node)
 	firstnode := node.NewNode(first, 0, 0)
-	h.nodes[0] = firstnode
-	h.enterpoint = node.NodeRef(0)
+	h.Nodes[0] = firstnode
+	h.Enterpoint = node.NodeRef(0)
 
 	// TODO: lock
-	h.countLevel = make(map[uint64]uint64)
-	h.countLevel[0] = 1
-	h.maxLayer = 0
-	h.sequence = 1
+	h.CountLevel = make(map[uint64]uint64)
+	h.CountLevel[0] = 1
+	h.MaxLayer = 0
+	h.Sequence = 1
 
 	return &h
 }
 
 func (h *Hnsw) Stats() string {
 	s := "HNSW Index\n"
-	s = s + fmt.Sprintf("M: %v, efConstruction: %v\n", h.M, h.efConstruction)
+	s = s + fmt.Sprintf("M: %v, efConstruction: %v\n", h.M, h.EfConstruction)
 	s = s + fmt.Sprintf("DelaunayType: %v\n", h.DelaunayType)
-	s = s + fmt.Sprintf("Number of nodes: %v\n", len(h.nodes))
-	s = s + fmt.Sprintf("Max layer: %v\n", h.maxLayer)
+	s = s + fmt.Sprintf("Number of nodes: %v\n", len(h.Nodes))
+	s = s + fmt.Sprintf("Max layer: %v\n", h.MaxLayer)
 	memoryUseData := 0
 	memoryUseIndex := uint64(0)
-	levCount := make([]uint64, h.maxLayer+1)
-	conns := make([]uint64, h.maxLayer+1)
-	connsC := make([]uint64, h.maxLayer+1)
-	for i := range h.nodes {
-		levCount[h.nodes[i].Level]++
-		for j := uint64(0); j <= h.nodes[i].Level; j++ {
-			if h.nodes[i].FriendLevelCount() > j {
-				l := len(h.nodes[i].Friends[j].Nodes)
+	levCount := make([]uint64, h.MaxLayer+1)
+	conns := make([]uint64, h.MaxLayer+1)
+	connsC := make([]uint64, h.MaxLayer+1)
+	for i := range h.Nodes {
+		levCount[h.Nodes[i].Level]++
+		for j := uint64(0); j <= h.Nodes[i].Level; j++ {
+			if h.Nodes[i].FriendLevelCount() > j {
+				l := len(h.Nodes[i].Friends[j].Nodes)
 				conns[j] += uint64(l)
 				connsC[j]++
 			}
 		}
-		memoryUseData += h.nodes[i].P.Size()
-		memoryUseIndex += h.nodes[i].Level*h.M*4 + h.M0*4
+		memoryUseData += h.Nodes[i].P.Size()
+		memoryUseIndex += h.Nodes[i].Level*h.M*4 + h.M0*4
 	}
 	for i := range levCount {
 		avg := conns[i] / max(1, connsC[i])
-		s = s + fmt.Sprintf("Level %v: %v (%d) nodes, average number of connections %v\n", i, levCount[uint64(i)], h.countLevel[uint64(i)], avg)
+		s = s + fmt.Sprintf("Level %v: %v (%d) nodes, average number of connections %v\n", i, levCount[uint64(i)], h.CountLevel[uint64(i)], avg)
 	}
-	s = s + fmt.Sprintf("Memory use for data: %v (%v bytes / point)\n", memoryUseData, memoryUseData/len(h.nodes))
-	s = s + fmt.Sprintf("Memory use for index: %v (avg %v bytes / point)\n", memoryUseIndex, memoryUseIndex/uint64(len(h.nodes)))
+	s = s + fmt.Sprintf("Memory use for data: %v (%v bytes / point)\n", memoryUseData, memoryUseData/len(h.Nodes))
+	s = s + fmt.Sprintf("Memory use for index: %v (avg %v bytes / point)\n", memoryUseIndex, memoryUseIndex/uint64(len(h.Nodes)))
 	return s
 }
 
 func (h *Hnsw) Print() string {
 	buf := strings.Builder{}
 
-	buf.WriteString(fmt.Sprintf("enterpoint = %d %p\n", h.enterpoint, h.nodes[h.enterpoint]))
+	buf.WriteString(fmt.Sprintf("enterpoint = %d %p\n", h.Enterpoint, h.Nodes[h.Enterpoint]))
 
-	for i, n := range h.nodes {
+	for i, n := range h.Nodes {
 		buf.WriteString(fmt.Sprintf("node %d, level %d, addr %p\n", i, n.Level, n))
 		for lvl, arr := range n.Friends {
 			for friendindex, f := range arr.Nodes {
@@ -269,8 +269,8 @@ func (h *Hnsw) findBestEnterPoint(ep *distqueue.Item, q node.Point, curlevel uin
 		// js: start search at the least granular level
 		for changed := true; changed; {
 			changed = false
-			for _, n := range h.nodes[ep.Node].GetFriends(level) {
-				d := h.DistFunc(h.nodes[n].P, q)
+			for _, n := range h.Nodes[ep.Node].GetFriends(level) {
+				d := h.DistFunc(h.Nodes[n].P, q)
 				if d < ep.D {
 					ep = &distqueue.Item{Node: n, D: d}
 					changed = true
@@ -289,15 +289,15 @@ func (h *Hnsw) Add(q node.Point) node.NodeRef {
 	// generate random level
 	curlevel := uint64(math.Floor(-math.Log(rand.Float64() * h.LevelMult)))
 
-	currentMaxLayer := h.nodes[h.enterpoint].Level
-	ep := &distqueue.Item{Node: h.enterpoint, D: h.DistFunc(h.nodes[h.enterpoint].P, q)}
+	currentMaxLayer := h.Nodes[h.Enterpoint].Level
+	ep := &distqueue.Item{Node: h.Enterpoint, D: h.DistFunc(h.Nodes[h.Enterpoint].P, q)}
 
 	//newNode := &node.Node{P: q, Level: curlevel, Friends: make([][]*node.Node, min(curlevel, currentMaxLayer)+1))}
-	indexForNewNode := h.sequence
-	h.sequence++
+	indexForNewNode := h.Sequence
+	h.Sequence++
 	newNode := node.NewNode(q, curlevel, indexForNewNode)
 	// TODO: lock
-	h.countLevel[curlevel]++
+	h.CountLevel[curlevel]++
 
 	// first pass, find another ep if curlevel < maxLayer
 	ep = h.findBestEnterPoint(ep, q, curlevel, currentMaxLayer)
@@ -308,7 +308,7 @@ func (h *Hnsw) Add(q node.Point) node.NodeRef {
 	for level := min(curlevel, currentMaxLayer); level < math.MaxUint64; level-- { // note: level intentionally overflows/wraps here
 
 		resultSet := &distqueue.DistQueueClosestLast{}
-		h.searchAtLayer(q, resultSet, h.efConstruction, ep, level)
+		h.searchAtLayer(q, resultSet, h.EfConstruction, ep, level)
 		switch h.DelaunayType {
 		case deluanayTypeSimple:
 			// shrink resultSet to M closest elements (the simple heuristic)
@@ -324,26 +324,26 @@ func (h *Hnsw) Add(q node.Point) node.NodeRef {
 			item := resultSet.Pop()
 			// store in order, closest at index 0
 			newNode.Friends[level].Nodes[i] = item.Node // HERE
-			h.nodes[item.Node].AddReverseLink(indexForNewNode, level)
+			h.Nodes[item.Node].AddReverseLink(indexForNewNode, level)
 		}
 	}
 
 	h.Lock()
 	// Add it and increase slice length if neccessary
-	h.nodes[node.NodeRef(indexForNewNode)] = newNode
+	h.Nodes[node.NodeRef(indexForNewNode)] = newNode
 	h.Unlock()
 
 	// now add connections to newNode from newNodes neighbours (makes it visible in the graph)
 	for level := min(curlevel, currentMaxLayer); level < math.MaxUint64; level-- { // note: level intentionally overflows/wraps here
 		for _, n := range newNode.Friends[level].Nodes {
-			h.Link(h.nodes[n], indexForNewNode, level)
+			h.Link(h.Nodes[n], indexForNewNode, level)
 		}
 	}
 
 	h.Lock()
-	if curlevel > h.maxLayer {
-		h.maxLayer = curlevel
-		h.enterpoint = node.NodeRef(indexForNewNode)
+	if curlevel > h.MaxLayer {
+		h.MaxLayer = curlevel
+		h.Enterpoint = node.NodeRef(indexForNewNode)
 	}
 	h.Unlock()
 
@@ -357,23 +357,23 @@ func (h *Hnsw) Remove(indexToRemove node.NodeRef) {
 	h.Lock()
 	defer h.Unlock()
 
-	hn := h.nodes[indexToRemove]
-	delete(h.nodes, indexToRemove)
+	hn := h.Nodes[indexToRemove]
+	delete(h.Nodes, indexToRemove)
 	//fmt.Printf("Removing id=%d\n", indexToRemove)
 
 	// TODO: fix speedup, no need for array here
 
-	hn.UnlinkFromFriends(h.nodes)
+	hn.UnlinkFromFriends(h.Nodes)
 
 	// TODO: lock
-	h.countLevel[hn.Level]--
+	h.CountLevel[hn.Level]--
 
 	// Re-assign enterpoint
-	if h.enterpoint == indexToRemove {
-		for layer := h.maxLayer; layer < math.MaxUint64; layer-- { //note: level intentionally overflows/wraps here
-			for i, nn := range h.nodes {
+	if h.Enterpoint == indexToRemove {
+		for layer := h.MaxLayer; layer < math.MaxUint64; layer-- { //note: level intentionally overflows/wraps here
+			for i, nn := range h.Nodes {
 				if nn.Level == layer {
-					h.enterpoint = i
+					h.Enterpoint = i
 					break
 				}
 			}
@@ -381,15 +381,15 @@ func (h *Hnsw) Remove(indexToRemove node.NodeRef) {
 	}
 
 	// Delete unnecessary layers
-	for layer := h.maxLayer; layer < math.MaxUint64; layer-- { //note: level intentionally overflows/wraps here
-		if h.countLevel[layer] == 0 {
-			h.maxLayer--
+	for layer := h.MaxLayer; layer < math.MaxUint64; layer-- { //note: level intentionally overflows/wraps here
+		if h.CountLevel[layer] == 0 {
+			h.MaxLayer--
 		} else {
 			break
 		}
 	}
 
-	if h.enterpoint == indexToRemove {
+	if h.Enterpoint == indexToRemove {
 		panic("failed to reassign enterpoint")
 	}
 }
@@ -419,12 +419,12 @@ func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosest
 			break
 		}
 
-		if h.nodes[c.Node].FriendLevelCount() >= level+1 {
-			friends := h.nodes[c.Node].Friends[level].Nodes
+		if h.Nodes[c.Node].FriendLevelCount() >= level+1 {
+			friends := h.Nodes[c.Node].Friends[level].Nodes
 			for _, n := range friends {
 				if !visited.Test(uint(n)) {
 					visited.Set(uint(n))
-					d := h.DistFunc(q, h.nodes[n].P)
+					d := h.DistFunc(q, h.Nodes[n].P)
 					_, topD := resultSet.Top()
 					if resultSet.Len() < efConstruction {
 						item := resultSet.Push(n, d)
@@ -446,8 +446,8 @@ func (h *Hnsw) Search(q node.Point, ef uint64, K uint64) *distqueue.DistQueueClo
 	//defer fmt.Printf("left Search\n")
 
 	h.RLock()
-	currentMaxLayer := h.maxLayer
-	ep := &distqueue.Item{Node: h.enterpoint, D: h.DistFunc(h.nodes[h.enterpoint].P, q)}
+	currentMaxLayer := h.MaxLayer
+	ep := &distqueue.Item{Node: h.Enterpoint, D: h.DistFunc(h.Nodes[h.Enterpoint].P, q)}
 	h.RUnlock()
 
 	resultSet := &distqueue.DistQueueClosestLast{Size: ef + 1}

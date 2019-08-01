@@ -104,16 +104,16 @@ func TestRemove(t *testing.T) {
 	}
 
 	dumpState(h, 9998)
-	n := h.nodes[500]
+	n := h.Nodes[500]
 	h.Remove(500)
 	dumpState(h, 9999)
 
 	Search(h, q)
 
-	for _, nn := range h.nodes {
-		for level := h.maxLayer; level < math.MaxUint64; level-- {
+	for _, nn := range h.Nodes {
+		for level := h.MaxLayer; level < math.MaxUint64; level-- {
 			for _, x := range nn.GetFriends(level) {
-				if h.nodes[x] == n {
+				if h.Nodes[x] == n {
 					t.FailNow()
 				}
 			}
@@ -128,7 +128,7 @@ func TestEnterPointRemove(t *testing.T) {
 	for i, v := range vecs {
 		n := h.Add(v)
 
-		if i > 4 && h.enterpoint == n && h.nodes[n].Level == h.maxLayer {
+		if i > 4 && h.Enterpoint == n && h.Nodes[n].Level == h.MaxLayer {
 			h.Remove(n)
 			break
 		}
@@ -137,8 +137,8 @@ func TestEnterPointRemove(t *testing.T) {
 	Search(h, q)
 
 	found := false
-	for i, _ := range h.nodes {
-		if i == h.enterpoint {
+	for i, _ := range h.Nodes {
+		if i == h.Enterpoint {
 			found = true
 			break
 		}
