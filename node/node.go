@@ -7,11 +7,11 @@ import (
 
 type Node struct {
 	sync.RWMutex
-	P            Point
-	Level        uint64
-	Friends      map[uint64]*LinkList
-	ReverseLinks map[uint64]*linkMap
-	Id           NodeRef
+	P              Point
+	Level          uint64
+	Friends        map[uint64]*LinkList
+	ReverseFriends map[uint64]*linkMap
+	Id             NodeRef
 }
 
 type LinkList struct {
@@ -31,11 +31,11 @@ func (a Point) Size() int {
 
 func NewNode(p Point, level uint64, id NodeRef) *Node {
 	return &Node{
-		P:            p,
-		Level:        level,
-		Friends:      make(map[uint64]*LinkList),
-		ReverseLinks: make(map[uint64]*linkMap),
-		Id:           id,
+		P:              p,
+		Level:          level,
+		Friends:        make(map[uint64]*LinkList),
+		ReverseFriends: make(map[uint64]*linkMap),
+		Id:             id,
 	}
 }
 
@@ -69,16 +69,16 @@ func (n *Node) FriendCountAtLevel(level uint64) uint64 {
 }
 
 func (n *Node) AddReverseLink(other NodeRef, level uint64) {
-	if n.ReverseLinks[level] == nil {
-		n.ReverseLinks[level] = &linkMap{
+	if n.ReverseFriends[level] == nil {
+		n.ReverseFriends[level] = &linkMap{
 			Nodes: make(map[NodeRef]bool),
 		}
 	}
-	n.ReverseLinks[level].Nodes[other] = true
+	n.ReverseFriends[level].Nodes[other] = true
 }
 
 func (n *Node) UnlinkFromFriends(allnodes map[NodeRef]*Node) {
-	for level, m := range n.ReverseLinks {
+	for level, m := range n.ReverseFriends {
 		for node, _ := range m.Nodes {
 			xother := allnodes[node]
 			if xother == nil {
