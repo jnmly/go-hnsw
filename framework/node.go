@@ -30,6 +30,7 @@ func (n *Node) GetNodeFriends(level uint64) []uint64 {
 func (n *Node) FriendLevelCount() uint64 {
 	high := uint64(0)
 	for k, _ := range n.Friends {
+		// NOTE: should we check if len(x.Nodes) > 0 too? or removal might have cleared this level
 		if k > high {
 			high = k
 		}
