@@ -84,6 +84,8 @@ func (h *Hnsw) Link(first *node.Node, second node.NodeRef, level uint64) {
 				h.nodes[item.Node].AddReverseLink(first.GetId(), level) // really needed?
 			}
 
+			// TODO: cleanup old reverse links
+
 			// HERE
 
 		case deluanayTypeHeuristic:
@@ -102,6 +104,8 @@ func (h *Hnsw) Link(first *node.Node, second node.NodeRef, level uint64) {
 				first.Friends[level][i] = item.Node
 				h.nodes[item.Node].AddReverseLink(first.GetId(), level) // really needed?
 			}
+
+			// TODO: cleanup old reverse links
 
 			// HERE
 		}
