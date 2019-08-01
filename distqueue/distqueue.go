@@ -1,11 +1,7 @@
 package distqueue
 
-import (
-	"github.com/jnmly/go-hnsw/node"
-)
-
 type Item struct {
-	Node node.NodeRef
+	Node uint64
 	D    float32
 }
 
@@ -36,7 +32,7 @@ func (pq *DistQueueClosestFirst) Reserve(n uint64) {
 }
 
 // Push the value item into the priority queue with provided priority.
-func (pq *DistQueueClosestFirst) Push(id node.NodeRef, d float32) *Item {
+func (pq *DistQueueClosestFirst) Push(id uint64, d float32) *Item {
 	if !pq.initiated {
 		pq.Init()
 	}
@@ -65,14 +61,14 @@ func (pq *DistQueueClosestFirst) Pop() *Item {
 	return max
 }
 
-func (pq *DistQueueClosestFirst) Top() (node.NodeRef, float32) {
+func (pq *DistQueueClosestFirst) Top() (uint64, float32) {
 	if len(pq.items) <= 1 {
 		return 0, 0
 	}
 	return pq.items[1].Node, pq.items[1].D
 }
 
-func (pq *DistQueueClosestFirst) Head() (node.NodeRef, float32) {
+func (pq *DistQueueClosestFirst) Head() (uint64, float32) {
 	if len(pq.items) <= 1 {
 		return 0, 0
 	}
@@ -131,7 +127,7 @@ func (pq *DistQueueClosestLast) Reserve(n uint64) {
 }
 
 // Push the value item into the priority queue with provided priority.
-func (pq *DistQueueClosestLast) Push(id node.NodeRef, d float32) *Item {
+func (pq *DistQueueClosestLast) Push(id uint64, d float32) *Item {
 	if !pq.initiated {
 		pq.Init()
 	}
@@ -142,7 +138,7 @@ func (pq *DistQueueClosestLast) Push(id node.NodeRef, d float32) *Item {
 }
 
 // PopAndPush pops the top element and adds a new to the heap in one operation which is faster than two seperate calls to Pop and Push
-func (pq *DistQueueClosestLast) PopAndPush(id node.NodeRef, d float32) *Item {
+func (pq *DistQueueClosestLast) PopAndPush(id uint64, d float32) *Item {
 	if !pq.initiated {
 		pq.Init()
 	}
@@ -171,14 +167,14 @@ func (pq *DistQueueClosestLast) Pop() *Item {
 	return max
 }
 
-func (pq *DistQueueClosestLast) Top() (node.NodeRef, float32) {
+func (pq *DistQueueClosestLast) Top() (uint64, float32) {
 	if len(pq.items) <= 1 {
 		return 0, 0
 	}
 	return pq.items[1].Node, pq.items[1].D
 }
 
-func (pq *DistQueueClosestLast) Head() (node.NodeRef, float32) {
+func (pq *DistQueueClosestLast) Head() (uint64, float32) {
 	if len(pq.items) <= 1 {
 		return 0, 0
 	}

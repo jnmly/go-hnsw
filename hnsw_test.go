@@ -8,12 +8,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jnmly/go-hnsw/node"
+	"github.com/jnmly/go-hnsw/framework"
 	"github.com/stretchr/testify/assert"
 )
 
 type Result struct {
-	Node     node.NodeRef
+	Node     uint64
 	Distance float32
 }
 
@@ -66,7 +66,7 @@ func newHnsw() *Hnsw {
 		cfgEfConstruction = 2000
 	)
 
-	var zero node.Point = make([]float32, dimsize)
+	var zero framework.Point = make([]float32, dimsize)
 	h := New(cfgM, cfgEfConstruction, zero)
 
 	return h
@@ -112,7 +112,7 @@ func TestRemove(t *testing.T) {
 
 	for _, nn := range h.Nodes {
 		for level := h.MaxLayer; level < math.MaxUint64; level-- {
-			for _, x := range nn.GetFriends(level) {
+			for _, x := range nn.GetNodeFriends(level) {
 				if h.Nodes[x] == n {
 					t.FailNow()
 				}
