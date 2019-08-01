@@ -5,6 +5,8 @@ import (
 	"io/ioutil"
 	"math"
 	"os"
+	"sort"
+	"strings"
 	"testing"
 	"time"
 
@@ -21,6 +23,104 @@ const (
 	testrecords = 1000
 	dimsize     = 128
 )
+
+func Print(h *Hnsw) string {
+	buf := strings.Builder{}
+
+	buf.WriteString(fmt.Sprintf("enterpoint = %d %p\n", h.Enterpoint, h.Nodes[h.Enterpoint]))
+
+	for i, n := range h.Nodes {
+		buf.WriteString(fmt.Sprintf("node %d, level %d, addr %p\n", i, n.Level, n))
+		for lvl, arr := range n.Friends {
+			for friendindex, f := range arr.Nodes {
+				buf.WriteString(fmt.Sprintf("     level %d friend %d = %d\n", lvl, friendindex, f))
+			}
+		}
+		buf.WriteString("\n\n\n")
+	}
+
+	return buf.String()
+}
+
+type u64array []uint64
+
+func FullState(h *Hnsw) string {
+	buf := strings.Builder{}
+
+	buf.WriteString(fmt.Sprintf("M = %v\n", h.M))
+	buf.WriteString(fmt.Sprintf("M0 = %v\n", h.M0))
+	buf.WriteString(fmt.Sprintf("EfConstruction = %v\n", h.EfConstruction))
+	buf.WriteString(fmt.Sprintf("DelaunayType = %v\n", h.DelaunayType))
+	buf.WriteString(fmt.Sprintf("LevelMult = %v\n", h.LevelMult))
+	buf.WriteString(fmt.Sprintf("MaxLayer = %v\n", h.MaxLayer))
+	buf.WriteString(fmt.Sprintf("Sequence = %v\n", h.Sequence))
+	buf.WriteString(fmt.Sprintf("Enterpoint = %v\n", h.Enterpoint))
+	//Nodes
+
+	keys := make(u64array, 0, len(h.CountLevel))
+	for k := range h.CountLevel {
+		keys = append(keys, k)
+	}
+	sort.Sort(keys)
+	for _, k := range keys {
+		buf.WriteString(fmt.Sprintf("CountLevel[%d] = %d\n", k, h.CountLevel[k]))
+	}
+
+	keys = make(u64array, 0, len(h.Nodes))
+	for k := range h.Nodes {
+		keys = append(keys, k)
+	}
+	sort.Sort(keys)
+	for _, k := range keys {
+		buf.WriteString(fmt.Sprintf("  node[%d].Id = %d\n", k, h.Nodes[k].Id))
+		buf.WriteString(fmt.Sprintf("  node[%d].Level = %d\n", k, h.Nodes[k].Level))
+		buf.WriteString(fmt.Sprintf("  node[%d].P = %v\n", k, h.Nodes[k].P))
+		buf.WriteString("")
+
+		friendkeys := make(u64array, 0, len(h.Nodes[k].Friends))
+		for k := range h.Nodes[k].Friends {
+			friendkeys = append(friendkeys, k)
+		}
+		sort.Sort(friendkeys)
+
+		for _, f := range friendkeys {
+			for _, fn := range h.Nodes[k].Friends[f].Nodes {
+				buf.WriteString(fmt.Sprintf("    node[%d].friend[%d] = %v\n", k, f, fn))
+			}
+		}
+
+		reversefriendkeys := make(u64array, 0, len(h.Nodes[k].ReverseFriends))
+		for k := range h.Nodes[k].ReverseFriends {
+			reversefriendkeys = append(reversefriendkeys, k)
+		}
+		sort.Sort(reversefriendkeys)
+		for _, f := range reversefriendkeys {
+			innerkeys := make(u64array, 0, len(h.Nodes[k].ReverseFriends[f].Nodes))
+			for i := range h.Nodes[k].ReverseFriends[f].Nodes {
+				innerkeys = append(innerkeys, i)
+			}
+			sort.Sort(innerkeys)
+
+			for _, rl := range innerkeys {
+				buf.WriteString(fmt.Sprintf("    node[%d].revfriend[%d] = %v\n", k, f, rl))
+			}
+		}
+	}
+
+	return buf.String()
+}
+
+func (u u64array) Len() int {
+	return len(u)
+}
+
+func (u u64array) Less(i int, j int) bool {
+	return u[i] < u[j]
+}
+
+func (u u64array) Swap(i int, j int) {
+	u[i], u[j] = u[j], u[i]
+}
 
 func Search(h *Hnsw, q []float32) []Result {
 	//fmt.Printf("entered test Search\n")
@@ -86,7 +186,7 @@ func TestSimple(t *testing.T) {
 }
 
 func dumpState(h *Hnsw, i int) {
-	err := ioutil.WriteFile(fmt.Sprintf("/tmp/state.%d", i), []byte(h.Print()), os.ModePerm)
+	err := ioutil.WriteFile(fmt.Sprintf("/tmp/state.%d", i), []byte(FullState(h)), os.ModePerm)
 	if err != nil {
 		panic(err)
 	}
@@ -167,7 +267,5 @@ func TestLoadSave(t *testing.T) {
 	assert.Equal(t, n, len(g.Nodes))
 	t.Logf("there are %d nodes", len(g.Nodes))
 
-	//t.Logf("first %s", h.Print())
-	//t.Logf("second %s", g.Print())
-	//assert.Equal(t, h.Print(), g.Print())
+	assert.Equal(t, FullState(h), FullState(g))
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
-	"strings"
 	"sync"
 
 	"github.com/jnmly/go-hnsw/bitsetpool"
@@ -232,24 +231,6 @@ func (h *Hnsw) Stats() string {
 	s = s + fmt.Sprintf("Memory use for data: %v (%v bytes / point)\n", memoryUseData, memoryUseData/len(h.Nodes))
 	s = s + fmt.Sprintf("Memory use for index: %v (avg %v bytes / point)\n", memoryUseIndex, memoryUseIndex/uint64(len(h.Nodes)))
 	return s
-}
-
-func (h *Hnsw) Print() string {
-	buf := strings.Builder{}
-
-	buf.WriteString(fmt.Sprintf("enterpoint = %d %p\n", h.Enterpoint, h.Nodes[h.Enterpoint]))
-
-	for i, n := range h.Nodes {
-		buf.WriteString(fmt.Sprintf("node %d, level %d, addr %p\n", i, n.Level, n))
-		for lvl, arr := range n.Friends {
-			for friendindex, f := range arr.Nodes {
-				buf.WriteString(fmt.Sprintf("     level %d friend %d = %d\n", lvl, friendindex, f))
-			}
-		}
-		buf.WriteString("\n\n\n")
-	}
-
-	return buf.String()
 }
 
 func (h *Hnsw) findBestEnterPoint(ep *distqueue.Item, q framework.Point, curlevel uint64, maxLayer uint64) *distqueue.Item {
