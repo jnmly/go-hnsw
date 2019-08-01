@@ -52,14 +52,11 @@ func (h *Hnsw) Link(first *node.Node, second node.NodeRef, level uint64) {
 
 	// check if we have allocated friends slices up to this level?
 	if first.FriendLevelCount() < level+1 {
-		for j := first.FriendLevelCount(); j <= level; j++ {
-			// allocate new list with 0 elements but capacity maxL
-			first.Friends = append(first.Friends, make([]node.NodeRef, 0, maxL))
-		}
+		first.AllocateFriendsUpTo(level, maxL)
 	}
 
 	// link with second node
-	first.Friends[level] = append(first.Friends[level], second) // HERE
+	first.Friends[level].Nodes = append(first.Friends[level].Nodes, second) // HERE
 	h.nodes[second].AddReverseLink(first.GetId(), level)
 
 	if first.FriendCountAtLevel(level) > maxL {
@@ -70,17 +67,17 @@ func (h *Hnsw) Link(first *node.Node, second node.NodeRef, level uint64) {
 		case deluanayTypeSimple:
 			resultSet := &distqueue.DistQueueClosestLast{Size: first.FriendCountAtLevel(level)}
 
-			for _, n := range first.Friends[level] {
+			for _, n := range first.Friends[level].Nodes {
 				resultSet.Push(n, h.DistFunc(first.P, h.nodes[n].P))
 			}
 			for resultSet.Len() > maxL {
 				resultSet.Pop()
 			}
 			// FRIENDS ARE STORED IN DISTANCE ORDER, closest at index 0
-			first.Friends[level] = first.Friends[level][0:maxL]
+			first.Friends[level].Nodes = first.Friends[level].Nodes[0:maxL]
 			for i := maxL - 1; i >= 0; i-- {
 				item := resultSet.Pop()
-				first.Friends[level][i] = item.Node
+				first.Friends[level].Nodes[i] = item.Node
 				h.nodes[item.Node].AddReverseLink(first.GetId(), level) // really needed?
 			}
 
@@ -92,16 +89,16 @@ func (h *Hnsw) Link(first *node.Node, second node.NodeRef, level uint64) {
 
 			resultSet := &distqueue.DistQueueClosestFirst{Size: first.FriendCountAtLevel(level)}
 
-			for _, n := range first.Friends[level] {
+			for _, n := range first.Friends[level].Nodes {
 				resultSet.Push(n, h.DistFunc(first.P, h.nodes[n].P))
 			}
 			h.getNeighborsByHeuristicClosestFirst(resultSet, maxL)
 
 			// FRIENDS ARE STORED IN DISTANCE ORDER, closest at index 0
-			first.Friends[level] = first.Friends[level][0:maxL]
+			first.Friends[level].Nodes = first.Friends[level].Nodes[0:maxL]
 			for i := uint64(0); i < maxL; i++ {
 				item := resultSet.Pop()
-				first.Friends[level][i] = item.Node
+				first.Friends[level].Nodes[i] = item.Node
 				h.nodes[item.Node].AddReverseLink(first.GetId(), level) // really needed?
 			}
 
@@ -204,7 +201,7 @@ func New(M uint64, efConstruction uint64, first node.Point) *Hnsw {
 
 	// add first point, it will be our enterpoint (index 0)
 	h.nodes = make(map[node.NodeRef]*node.Node)
-	firstnode := node.NewNode(first, 0, nil, 0)
+	firstnode := node.NewNode(first, 0, 0)
 	h.nodes[0] = firstnode
 	h.enterpoint = node.NodeRef(0)
 
@@ -232,7 +229,7 @@ func (h *Hnsw) Stats() string {
 		levCount[h.nodes[i].Level]++
 		for j := uint64(0); j <= h.nodes[i].Level; j++ {
 			if h.nodes[i].FriendLevelCount() > j {
-				l := len(h.nodes[i].Friends[j])
+				l := len(h.nodes[i].Friends[j].Nodes)
 				conns[j] += uint64(l)
 				connsC[j]++
 			}
@@ -257,7 +254,7 @@ func (h *Hnsw) Print() string {
 	for i, n := range h.nodes {
 		buf.WriteString(fmt.Sprintf("node %d, level %d, addr %p\n", i, n.Level, n))
 		for lvl, arr := range n.Friends {
-			for friendindex, f := range arr {
+			for friendindex, f := range arr.Nodes {
 				buf.WriteString(fmt.Sprintf("     level %d friend %d = %d\n", lvl, friendindex, f))
 			}
 		}
@@ -298,7 +295,7 @@ func (h *Hnsw) Add(q node.Point) node.NodeRef {
 	//newNode := &node.Node{P: q, Level: curlevel, Friends: make([][]*node.Node, min(curlevel, currentMaxLayer)+1))}
 	indexForNewNode := h.sequence
 	h.sequence++
-	newNode := node.NewNode(q, curlevel, make([][]node.NodeRef, min(curlevel, currentMaxLayer)+1), indexForNewNode)
+	newNode := node.NewNode(q, curlevel, indexForNewNode)
 	// TODO: lock
 	h.countLevel[curlevel]++
 
@@ -321,11 +318,12 @@ func (h *Hnsw) Add(q node.Point) node.NodeRef {
 		case deluanayTypeHeuristic:
 			h.getNeighborsByHeuristicClosestLast(resultSet, h.M)
 		}
-		newNode.Friends[level] = make([]node.NodeRef, resultSet.Len())
+		newNode.AllocateFriendsUpTo(level, h.M) // js: potentially only needs to alloc this level
+		newNode.Friends[level].Nodes = make([]node.NodeRef, resultSet.Len())
 		for i := resultSet.Len() - 1; i < math.MaxUint64; i-- { // note: i intentionally overflows/wraps here
 			item := resultSet.Pop()
 			// store in order, closest at index 0
-			newNode.Friends[level][i] = item.Node // HERE
+			newNode.Friends[level].Nodes[i] = item.Node // HERE
 			h.nodes[item.Node].AddReverseLink(indexForNewNode, level)
 		}
 	}
@@ -337,7 +335,7 @@ func (h *Hnsw) Add(q node.Point) node.NodeRef {
 
 	// now add connections to newNode from newNodes neighbours (makes it visible in the graph)
 	for level := min(curlevel, currentMaxLayer); level < math.MaxUint64; level-- { // note: level intentionally overflows/wraps here
-		for _, n := range newNode.Friends[level] {
+		for _, n := range newNode.Friends[level].Nodes {
 			h.Link(h.nodes[n], indexForNewNode, level)
 		}
 	}
@@ -422,7 +420,7 @@ func (h *Hnsw) searchAtLayer(q node.Point, resultSet *distqueue.DistQueueClosest
 		}
 
 		if h.nodes[c.Node].FriendLevelCount() >= level+1 {
-			friends := h.nodes[c.Node].Friends[level]
+			friends := h.nodes[c.Node].Friends[level].Nodes
 			for _, n := range friends {
 				if !visited.Test(uint(n)) {
 					visited.Set(uint(n))

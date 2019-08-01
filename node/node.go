@@ -9,13 +9,17 @@ type Node struct {
 	sync.RWMutex
 	P            Point
 	Level        uint64
-	Friends      [][]NodeRef
-	reverseLinks map[uint64]*link
+	Friends      map[uint64]*LinkList
+	reverseLinks map[uint64]*linkMap
 	id           NodeRef
 }
 
-type link struct {
-	nodes map[NodeRef]bool
+type LinkList struct {
+	Nodes []NodeRef
+}
+
+type linkMap struct {
+	Nodes map[NodeRef]bool
 }
 
 type Point []float32
@@ -25,58 +29,66 @@ func (a Point) Size() int {
 	return len(a) * 4
 }
 
-func NewNode(p Point, level uint64, friends [][]NodeRef, id NodeRef) *Node {
-	n := &Node{}
-	n.reverseLinks = make(map[uint64]*link)
-	n.P = p
-	n.id = id
-
-	if friends != nil {
-		n.Friends = friends
-		n.Level = level
-	} else {
-		n.Level = 0
+func NewNode(p Point, level uint64, id NodeRef) *Node {
+	return &Node{
+		P:            p,
+		Level:        level,
+		Friends:      make(map[uint64]*LinkList),
+		reverseLinks: make(map[uint64]*linkMap),
+		id:           id,
 	}
+}
 
-	return n
+func (n *Node) AllocateFriendsUpTo(level uint64, capacity uint64) {
+	for i := n.FriendLevelCount(); i <= level; i++ {
+		if n.Friends[i] == nil {
+			n.Friends[i] = &LinkList{Nodes: make([]NodeRef, 0, capacity)}
+		}
+	}
 }
 
 func (n *Node) GetFriends(level uint64) []NodeRef {
 	if uint64(len(n.Friends)) < level+1 {
 		return make([]NodeRef, 0)
 	}
-	return n.Friends[level]
+	return n.Friends[level].Nodes
 }
 
 func (n *Node) FriendLevelCount() uint64 {
-	return uint64(len(n.Friends))
+	high := uint64(0)
+	for k, _ := range n.Friends {
+		if k > high {
+			high = k
+		}
+	}
+	return high
 }
 
 func (n *Node) FriendCountAtLevel(level uint64) uint64 {
-	return uint64(len(n.Friends[level]))
+	return uint64(len(n.Friends[level].Nodes))
 }
 
 func (n *Node) AddReverseLink(other NodeRef, level uint64) {
 	if n.reverseLinks[level] == nil {
-		n.reverseLinks[level] = &link{
-			nodes: make(map[NodeRef]bool),
+		n.reverseLinks[level] = &linkMap{
+			Nodes: make(map[NodeRef]bool),
 		}
 	}
-	n.reverseLinks[level].nodes[other] = true
+	n.reverseLinks[level].Nodes[other] = true
 }
 
 func (n *Node) UnlinkFromFriends(allnodes map[NodeRef]*Node) {
 	for level, m := range n.reverseLinks {
-		for node, _ := range m.nodes {
+		for node, _ := range m.Nodes {
 			xother := allnodes[node]
 			if xother == nil {
 				continue
 			}
-			nodes := xother.Friends[level]
-			for j, x := range nodes {
+			Nodes := xother.Friends[level]
+			for j, x := range Nodes.Nodes {
 				if x == n.GetId() {
 					// exclude me from array
-					xother.Friends[level] = append(xother.Friends[level][:j], xother.Friends[level][j+1:]...)
+					xother.Friends[level].Nodes = append(xother.Friends[level].Nodes[:j], xother.Friends[level].Nodes[j+1:]...)
 				}
 			}
 		}
