@@ -3,6 +3,7 @@ package hnsw
 import (
 	"fmt"
 	"io/ioutil"
+	"math"
 	"os"
 	"testing"
 	"time"
@@ -110,7 +111,7 @@ func TestRemove(t *testing.T) {
 	Search(h, q)
 
 	for _, nn := range h.nodes {
-		for level := h.maxLayer; level >= 0; level-- {
+		for level := h.maxLayer; level < math.MaxUint64; level-- {
 			for _, x := range nn.GetFriends(level) {
 				if h.nodes[x] == n {
 					t.FailNow()
@@ -127,8 +128,8 @@ func TestEnterPointRemove(t *testing.T) {
 	for i, v := range vecs {
 		n := h.Add(v)
 
-		if i > 4 && h.enterpoint == n.GetId() && n.Level == h.maxLayer {
-			h.Remove(n.GetId())
+		if i > 4 && h.enterpoint == n && h.nodes[n].Level == h.maxLayer {
+			h.Remove(n)
 			break
 		}
 	}

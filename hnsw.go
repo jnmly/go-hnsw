@@ -281,7 +281,7 @@ func (h *Hnsw) findBestEnterPoint(ep *distqueue.Item, q node.Point, curlevel uin
 	return ep
 }
 
-func (h *Hnsw) Add(q node.Point) *node.Node {
+func (h *Hnsw) Add(q node.Point) node.NodeRef {
 	//fmt.Printf("entered Add\n")
 	//defer fmt.Printf("left Add\n")
 
@@ -345,7 +345,7 @@ func (h *Hnsw) Add(q node.Point) *node.Node {
 	}
 	h.Unlock()
 
-	return newNode
+	return indexForNewNode
 }
 
 func (h *Hnsw) Remove(indexToRemove node.NodeRef) {
@@ -353,9 +353,11 @@ func (h *Hnsw) Remove(indexToRemove node.NodeRef) {
 	//defer fmt.Printf("left Remove\n")
 
 	h.Lock()
+	defer h.Unlock()
+
 	hn := h.nodes[indexToRemove]
 	delete(h.nodes, indexToRemove)
-	h.Unlock()
+	//fmt.Printf("Removing id=%d\n", indexToRemove)
 
 	// TODO: fix speedup, no need for array here
 
@@ -366,7 +368,7 @@ func (h *Hnsw) Remove(indexToRemove node.NodeRef) {
 
 	// Re-assign enterpoint
 	if h.enterpoint == indexToRemove {
-		for layer := h.maxLayer; layer >= 0; layer-- {
+		for layer := h.maxLayer; layer < math.MaxUint64; layer-- { //note: level intentionally overflows/wraps here
 			for i, nn := range h.nodes {
 				if nn.Level == layer {
 					h.enterpoint = i
@@ -377,7 +379,7 @@ func (h *Hnsw) Remove(indexToRemove node.NodeRef) {
 	}
 
 	// Delete unnecessary layers
-	for layer := h.maxLayer; layer >= 0; layer-- {
+	for layer := h.maxLayer; layer < math.MaxUint64; layer-- { //note: level intentionally overflows/wraps here
 		if h.countLevel[layer] == 0 {
 			h.maxLayer--
 		} else {

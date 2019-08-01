@@ -1,7 +1,7 @@
 package node
 
 import (
-	//"fmt"
+	"fmt"
 	"sync"
 )
 
@@ -10,13 +10,12 @@ type Node struct {
 	P            Point
 	Level        uint64
 	Friends      [][]NodeRef
-	reverseLinks []*link
+	reverseLinks map[uint64]*link
 	id           NodeRef
 }
 
 type link struct {
-	othernode  NodeRef
-	otherlevel uint64
+	nodes map[NodeRef]bool
 }
 
 type Point []float32
@@ -27,11 +26,19 @@ func (a Point) Size() int {
 }
 
 func NewNode(p Point, level uint64, friends [][]NodeRef, id NodeRef) *Node {
+	n := &Node{}
+	n.reverseLinks = make(map[uint64]*link)
+	n.P = p
+	n.id = id
+
 	if friends != nil {
-		return &Node{P: p, Level: level, Friends: friends, id: id}
+		n.Friends = friends
+		n.Level = level
 	} else {
-		return &Node{Level: 0, P: p, id: id}
+		n.Level = 0
 	}
+
+	return n
 }
 
 func (n *Node) GetFriends(level uint64) []NodeRef {
@@ -50,26 +57,27 @@ func (n *Node) FriendCountAtLevel(level uint64) uint64 {
 }
 
 func (n *Node) AddReverseLink(other NodeRef, level uint64) {
-	if n.reverseLinks == nil {
-		n.reverseLinks = make([]*link, 0)
+	if n.reverseLinks[level] == nil {
+		n.reverseLinks[level] = &link{
+			nodes: make(map[NodeRef]bool),
+		}
 	}
-
-	n.reverseLinks = append(n.reverseLinks,
-		&link{
-			othernode:  other,
-			otherlevel: level,
-		},
-	)
+	n.reverseLinks[level].nodes[other] = true
 }
 
 func (n *Node) UnlinkFromFriends(allnodes map[NodeRef]*Node) {
-	for _, other := range n.reverseLinks {
-		xother := allnodes[other.othernode]
-		nodes := xother.Friends[other.otherlevel]
-		for j, x := range nodes {
-			if x == n.GetId() {
-				// exclude me from array
-				xother.Friends[other.otherlevel] = append(xother.Friends[other.otherlevel][:j], xother.Friends[other.otherlevel][j+1:]...)
+	for level, m := range n.reverseLinks {
+		for node, _ := range m.nodes {
+			xother := allnodes[node]
+			if xother == nil {
+				continue
+			}
+			nodes := xother.Friends[level]
+			for j, x := range nodes {
+				if x == n.GetId() {
+					// exclude me from array
+					xother.Friends[level] = append(xother.Friends[level][:j], xother.Friends[level][j+1:]...)
+				}
 			}
 		}
 	}
