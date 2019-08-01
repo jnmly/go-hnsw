@@ -148,3 +148,26 @@ func TestEnterPointRemove(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestLoadSave(t *testing.T) {
+	h := newHnsw()
+	_, vecs := getTestdata(t)
+	for _, v := range vecs {
+		h.Add(v)
+	}
+
+	data, err := h.Marshal()
+	assert.NoError(t, err)
+	t.Logf("data is %d long", len(data))
+	n := len(h.Nodes)
+
+	g := &Hnsw{}
+	err = g.Unmarshal(data)
+	assert.NoError(t, err)
+	assert.Equal(t, n, len(g.Nodes))
+	t.Logf("there are %d nodes", len(g.Nodes))
+
+	//t.Logf("first %s", h.Print())
+	//t.Logf("second %s", g.Print())
+	//assert.Equal(t, h.Print(), g.Print())
+}
