@@ -304,7 +304,7 @@ func (h *Hnsw) Add(q node.Point) *node.Node {
 	// second pass, ef = efConstruction
 	// loop through every level from the new nodes level down to level 0
 	// create new connections in every layer
-	for level := min(curlevel, currentMaxLayer); level >= 0; level-- {
+	for level := min(curlevel, currentMaxLayer); level < math.MaxUint64; level-- { // note: level intentionally overflows/wraps here
 
 		resultSet := &distqueue.DistQueueClosestLast{}
 		h.searchAtLayer(q, resultSet, h.efConstruction, ep, level)
@@ -318,10 +318,9 @@ func (h *Hnsw) Add(q node.Point) *node.Node {
 			h.getNeighborsByHeuristicClosestLast(resultSet, h.M)
 		}
 		newNode.Friends[level] = make([]node.NodeRef, resultSet.Len())
-		for i := resultSet.Len() - 1; i >= 0; i-- {
+		for i := resultSet.Len() - 1; i < math.MaxUint64; i-- { // note: i intentionally overflows/wraps here
 			item := resultSet.Pop()
 			// store in order, closest at index 0
-			fmt.Printf("HEJSAN %v %v %v %v\n", newNode, level, i, item)
 			newNode.Friends[level][i] = item.Node // HERE
 			h.nodes[item.Node].AddReverseLink(indexForNewNode, level)
 		}
@@ -333,7 +332,7 @@ func (h *Hnsw) Add(q node.Point) *node.Node {
 	h.Unlock()
 
 	// now add connections to newNode from newNodes neighbours (makes it visible in the graph)
-	for level := min(curlevel, currentMaxLayer); level >= 0; level-- {
+	for level := min(curlevel, currentMaxLayer); level < math.MaxUint64; level-- { // note: level intentionally overflows/wraps here
 		for _, n := range newNode.Friends[level] {
 			h.Link(h.nodes[n], indexForNewNode, level)
 		}
