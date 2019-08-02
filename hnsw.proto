@@ -1,0 +1,43 @@
+syntax = 'proto3';
+
+package framework;
+
+/*@go
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+
+// https://github.com/gogo/protobuf/blob/master/extensions.md
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.gostring_all) = true;
+option (gogoproto.equal_all) = true;
+@go*/
+
+message LinkMap {
+	map<uint64, bool> Nodes = 1;
+}
+
+message LinkList {
+	repeated uint64 Nodes = 1;
+}
+
+message Node {
+	repeated float P = 1;
+	uint64 Level = 2;
+	map<uint64, LinkList> Friends = 3;
+	map<uint64, LinkMap> ReverseFriends = 4;
+	uint64 Id = 5;
+}
+
+message Hnsw {
+	uint64 M = 1;
+	uint64 M0 = 2;
+	uint64 EfConstruction = 3;
+	uint64 DelaunayType = 4;
+	double LevelMult = 5;
+	uint64 MaxLayer = 6;
+	uint64 Sequence = 7;
+	map<uint64, uint64> CountLevel = 8;
+	uint64 Enterpoint = 9;
+	map<uint64, Node> Nodes = 10;
+}
+

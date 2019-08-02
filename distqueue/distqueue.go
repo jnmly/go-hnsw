@@ -1,18 +1,14 @@
 package distqueue
 
-import (
-	"github.com/jnmly/go-hnsw/node"
-)
-
 type Item struct {
-	Node *node.Node
+	Node uint64
 	D    float32
 }
 
 type DistQueueClosestFirst struct {
 	initiated bool
 	items     []*Item
-	Size      int
+	Size      uint64
 }
 
 func (pq *DistQueueClosestFirst) Init() *DistQueueClosestFirst {
@@ -26,7 +22,7 @@ func (pq *DistQueueClosestFirst) Reset() {
 	pq.items = pq.items[0:1]
 }
 
-func (pq *DistQueueClosestFirst) Reserve(n int) {
+func (pq *DistQueueClosestFirst) Reserve(n uint64) {
 	if n > pq.Len() {
 		// reserve memory by setting the slice capacity
 		items2 := make([]*Item, len(pq.items), n+1)
@@ -36,7 +32,7 @@ func (pq *DistQueueClosestFirst) Reserve(n int) {
 }
 
 // Push the value item into the priority queue with provided priority.
-func (pq *DistQueueClosestFirst) Push(id *node.Node, d float32) *Item {
+func (pq *DistQueueClosestFirst) Push(id uint64, d float32) *Item {
 	if !pq.initiated {
 		pq.Init()
 	}
@@ -65,22 +61,22 @@ func (pq *DistQueueClosestFirst) Pop() *Item {
 	return max
 }
 
-func (pq *DistQueueClosestFirst) Top() (*node.Node, float32) {
+func (pq *DistQueueClosestFirst) Top() (uint64, float32) {
 	if len(pq.items) <= 1 {
-		return nil, 0
+		return 0, 0
 	}
 	return pq.items[1].Node, pq.items[1].D
 }
 
-func (pq *DistQueueClosestFirst) Head() (*node.Node, float32) {
+func (pq *DistQueueClosestFirst) Head() (uint64, float32) {
 	if len(pq.items) <= 1 {
-		return nil, 0
+		return 0, 0
 	}
 	return pq.items[1].Node, pq.items[1].D
 }
 
-func (pq *DistQueueClosestFirst) Len() int {
-	return len(pq.items) - 1
+func (pq *DistQueueClosestFirst) Len() uint64 {
+	return uint64(len(pq.items) - 1)
 }
 
 func (pq *DistQueueClosestFirst) Empty() bool {
@@ -94,7 +90,7 @@ func (pq *DistQueueClosestFirst) swim(k int) {
 	}
 }
 
-func (pq *DistQueueClosestFirst) sink(k int) {
+func (pq *DistQueueClosestFirst) sink(k uint64) {
 	for 2*k <= pq.Len() {
 		var j = 2 * k
 		if j < pq.Len() && (pq.items[j].D > pq.items[j+1].D) {
@@ -111,7 +107,7 @@ func (pq *DistQueueClosestFirst) sink(k int) {
 type DistQueueClosestLast struct {
 	initiated bool
 	items     []*Item
-	Size      int
+	Size      uint64
 }
 
 func (pq *DistQueueClosestLast) Init() *DistQueueClosestLast {
@@ -121,7 +117,7 @@ func (pq *DistQueueClosestLast) Init() *DistQueueClosestLast {
 	return pq
 }
 
-func (pq *DistQueueClosestLast) Reserve(n int) {
+func (pq *DistQueueClosestLast) Reserve(n uint64) {
 	if n > pq.Len() {
 		// reserve memory by setting the slice capacity
 		items2 := make([]*Item, len(pq.items), n+1)
@@ -131,7 +127,7 @@ func (pq *DistQueueClosestLast) Reserve(n int) {
 }
 
 // Push the value item into the priority queue with provided priority.
-func (pq *DistQueueClosestLast) Push(id *node.Node, d float32) *Item {
+func (pq *DistQueueClosestLast) Push(id uint64, d float32) *Item {
 	if !pq.initiated {
 		pq.Init()
 	}
@@ -142,7 +138,7 @@ func (pq *DistQueueClosestLast) Push(id *node.Node, d float32) *Item {
 }
 
 // PopAndPush pops the top element and adds a new to the heap in one operation which is faster than two seperate calls to Pop and Push
-func (pq *DistQueueClosestLast) PopAndPush(id *node.Node, d float32) *Item {
+func (pq *DistQueueClosestLast) PopAndPush(id uint64, d float32) *Item {
 	if !pq.initiated {
 		pq.Init()
 	}
@@ -171,22 +167,22 @@ func (pq *DistQueueClosestLast) Pop() *Item {
 	return max
 }
 
-func (pq *DistQueueClosestLast) Top() (*node.Node, float32) {
+func (pq *DistQueueClosestLast) Top() (uint64, float32) {
 	if len(pq.items) <= 1 {
-		return nil, 0
+		return 0, 0
 	}
 	return pq.items[1].Node, pq.items[1].D
 }
 
-func (pq *DistQueueClosestLast) Head() (*node.Node, float32) {
+func (pq *DistQueueClosestLast) Head() (uint64, float32) {
 	if len(pq.items) <= 1 {
-		return nil, 0
+		return 0, 0
 	}
 	return pq.items[1].Node, pq.items[1].D
 }
 
-func (pq *DistQueueClosestLast) Len() int {
-	return len(pq.items) - 1
+func (pq *DistQueueClosestLast) Len() uint64 {
+	return uint64(len(pq.items) - 1)
 }
 
 func (pq *DistQueueClosestLast) Empty() bool {
@@ -201,7 +197,7 @@ func (pq *DistQueueClosestLast) swim(k int) {
 	}
 }
 
-func (pq *DistQueueClosestLast) sink(k int) {
+func (pq *DistQueueClosestLast) sink(k uint64) {
 	for 2*k <= pq.Len() {
 		var j = 2 * k
 		if j < pq.Len() && (pq.items[j].D < pq.items[j+1].D) {

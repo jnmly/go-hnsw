@@ -14,7 +14,7 @@ func TestQueue(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		pq.Push(
-			&node.Node{},
+			node.NodeRef(i),
 			float32(rand.Float64()))
 	}
 
@@ -36,7 +36,7 @@ func TestQueue(t *testing.T) {
 	pq2.Init()
 	pq2.Reserve(200) // try reserve
 	for i := 0; i < 10; i++ {
-		pq2.Push(&node.Node{}, float32(rand.Float64()))
+		pq2.Push(node.NodeRef(i), float32(rand.Float64()))
 	}
 	t.Log("Closest last, pop")
 	for !pq2.Empty() {
@@ -54,7 +54,7 @@ func TestKBest(t *testing.T) {
 	pq := &DistQueueClosestFirst{}
 	pq.Reserve(5) // reserve less than needed
 	for i := 0; i < 20; i++ {
-		pq.Push(&node.Node{}, rand.Float32())
+		pq.Push(node.NodeRef(i), rand.Float32())
 	}
 
 	// return K best matches, ordered as best first
@@ -74,9 +74,9 @@ func TestKBest(t *testing.T) {
 
 func TestBasicOne(t *testing.T) {
 	pq := &DistQueueClosestFirst{}
-	pq.Push(&node.Node{}, float32(20))
-	pq.Push(&node.Node{}, float32(10))
-	pq.Push(&node.Node{}, float32(15))
+	pq.Push(node.NodeRef(0), float32(20))
+	pq.Push(node.NodeRef(1), float32(10))
+	pq.Push(node.NodeRef(2), float32(15))
 	for i := 1; i <= pq.Len(); i++ {
 		t.Logf("internal %d=%f", i, pq.items[i].D)
 	}
@@ -95,10 +95,10 @@ func TestBasicOne(t *testing.T) {
 
 func TestBasicTwo(t *testing.T) {
 	pq := &DistQueueClosestFirst{}
-	pq.Push(&node.Node{}, float32(20))
-	pq.Push(&node.Node{}, float32(10))
-	pq.Push(&node.Node{}, float32(15))
-	pq.Push(&node.Node{}, float32(5))
+	pq.Push(node.NodeRef(0), float32(20))
+	pq.Push(node.NodeRef(1), float32(10))
+	pq.Push(node.NodeRef(2), float32(15))
+	pq.Push(node.NodeRef(3), float32(5))
 	for i := 1; i <= pq.Len(); i++ {
 		t.Logf("internal %d=%f", i, pq.items[i].D)
 	}
@@ -117,15 +117,15 @@ func TestBasicTwo(t *testing.T) {
 
 func TestBasicThree(t *testing.T) {
 	pq := &DistQueueClosestFirst{}
-	pq.Push(&node.Node{}, float32(20))
-	pq.Push(&node.Node{}, float32(10))
-	pq.Push(&node.Node{}, float32(15))
-	pq.Push(&node.Node{}, float32(5))
-	pq.Push(&node.Node{}, float32(45))
-	pq.Push(&node.Node{}, float32(75))
-	pq.Push(&node.Node{}, float32(85))
-	pq.Push(&node.Node{}, float32(95))
-	pq.Push(&node.Node{}, float32(30))
+	pq.Push(node.NodeRef(0), float32(20))
+	pq.Push(node.NodeRef(1), float32(10))
+	pq.Push(node.NodeRef(2), float32(15))
+	pq.Push(node.NodeRef(3), float32(5))
+	pq.Push(node.NodeRef(4), float32(45))
+	pq.Push(node.NodeRef(5), float32(75))
+	pq.Push(node.NodeRef(6), float32(85))
+	pq.Push(node.NodeRef(7), float32(95))
+	pq.Push(node.NodeRef(8), float32(30))
 	for i := 1; i <= pq.Len(); i++ {
 		t.Logf("internal %d=%f", i, pq.items[i].D)
 	}
