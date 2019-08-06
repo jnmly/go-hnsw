@@ -1,6 +1,8 @@
 package hnsw
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"math"
 	"math/rand"
@@ -18,7 +20,7 @@ const (
 )
 
 type Hnsw struct {
-	sync.RWMutex
+	mutex sync.RWMutex
 	framework.Hnsw
 
 	DistFunc func([]float32, []float32) float32
@@ -297,10 +299,10 @@ func (h *Hnsw) Add(q framework.Point) uint64 {
 		}
 	}
 
-	h.Lock()
+	h.mutex.Lock()
 	// Add it and increase slice length if neccessary
 	h.Nodes[indexForNewNode] = newNode
-	h.Unlock()
+	h.mutex.Unlock()
 
 	// now add connections to newNode from newNodes neighbours (makes it visible in the graph)
 	for level := min(curlevel, currentMaxLayer); level < math.MaxUint64; level-- { // note: level intentionally overflows/wraps here
@@ -309,12 +311,12 @@ func (h *Hnsw) Add(q framework.Point) uint64 {
 		}
 	}
 
-	h.Lock()
+	h.mutex.Lock()
 	if curlevel > h.MaxLayer {
 		h.MaxLayer = curlevel
 		h.Enterpoint = indexForNewNode
 	}
-	h.Unlock()
+	h.mutex.Unlock()
 
 	return indexForNewNode
 }
@@ -323,8 +325,8 @@ func (h *Hnsw) Remove(indexToRemove uint64) {
 	//fmt.Printf("entered Remove\n")
 	//defer fmt.Printf("left Remove\n")
 
-	h.Lock()
-	defer h.Unlock()
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
 
 	hn := h.Nodes[indexToRemove]
 	delete(h.Nodes, indexToRemove)
@@ -414,10 +416,10 @@ func (h *Hnsw) Search(q framework.Point, ef uint64, K uint64) *distqueue.DistQue
 	//fmt.Printf("entered Search\n")
 	//defer fmt.Printf("left Search\n")
 
-	h.RLock()
+	h.mutex.RLock()
 	currentMaxLayer := h.MaxLayer
 	ep := &distqueue.Item{Node: h.Enterpoint, D: h.DistFunc(h.Nodes[h.Enterpoint].P, q)}
-	h.RUnlock()
+	h.mutex.RUnlock()
 
 	resultSet := &distqueue.DistQueueClosestLast{Size: ef + 1}
 	// first pass, find best ep
@@ -443,4 +445,18 @@ func max(a, b uint64) uint64 {
 		return a
 	}
 	return b
+}
+
+func (h *Hnsw) Marshal() ([]byte, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	err := enc.Encode(h)
+	return buf.Bytes(), err
+}
+
+func (h *Hnsw) Unmarshal(data []byte) error {
+	buf := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buf)
+	err := dec.Decode(&h)
+	return err
 }

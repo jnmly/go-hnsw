@@ -256,13 +256,13 @@ func TestLoadSave(t *testing.T) {
 		h.Add(v)
 	}
 
-	data, err := h.Marshal()
+	data, err := h.ToBytes()
 	assert.NoError(t, err)
 	t.Logf("data is %d long", len(data))
 	n := len(h.Nodes)
 
 	g := &Hnsw{}
-	err = g.Unmarshal(data)
+	err = g.FromBytes(data)
 	assert.NoError(t, err)
 	assert.Equal(t, n, len(g.Nodes))
 	t.Logf("there are %d nodes", len(g.Nodes))
