@@ -7,6 +7,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -268,4 +269,36 @@ func TestLoadSave(t *testing.T) {
 	t.Logf("there are %d nodes", len(g.Nodes))
 
 	assert.Equal(t, FullState(h), FullState(g))
+}
+
+func TestLocking(t *testing.T) {
+	h := newHnsw()
+	_, vecs := getTestdata(t)
+	wg := &sync.WaitGroup{}
+
+	dups := make(chan uint64, len(vecs))
+
+	for _, v := range vecs {
+		wg.Add(4)
+		go func() {
+			nodeId := h.Add(v)
+			dups <- nodeId
+			wg.Done()
+		}()
+		go func() {
+			h.Search(v, 2000, 5)
+			wg.Done()
+		}()
+		go func() {
+			nodeId := <-dups
+			h.Remove(nodeId)
+			wg.Done()
+		}()
+		go func() {
+			h.Stats()
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
 }
