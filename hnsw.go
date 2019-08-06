@@ -18,7 +18,7 @@ const (
 )
 
 type Hnsw struct {
-	sync.RWMutex
+	sync.Mutex
 	framework.Hnsw
 
 	DistFunc func([]float32, []float32) float32
@@ -26,9 +26,9 @@ type Hnsw struct {
 	bitset *bitsetpool.BitsetPool
 }
 
-func (h *Hnsw) Link(first *framework.Node, second uint64, level uint64) {
-	//fmt.Printf("entered Link\n")
-	//defer fmt.Printf("left Link\n")
+func (h *Hnsw) link(first *framework.Node, second uint64, level uint64) {
+	//fmt.Printf("entered link\n")
+	//defer fmt.Printf("left link\n")
 
 	maxL := h.M
 	if level == 0 {
@@ -206,6 +206,8 @@ func New(M uint64, efConstruction uint64, first framework.Point) *Hnsw {
 }
 
 func (h *Hnsw) Stats() string {
+	h.Lock()
+	defer h.Unlock()
 	s := "HNSW Index\n"
 	s = s + fmt.Sprintf("M: %v, efConstruction: %v\n", h.M, h.EfConstruction)
 	s = s + fmt.Sprintf("DelaunayType: %v\n", h.DelaunayType)
@@ -258,6 +260,8 @@ func (h *Hnsw) findBestEnterPoint(ep *distqueue.Item, q framework.Point, curleve
 func (h *Hnsw) Add(q framework.Point) uint64 {
 	//fmt.Printf("entered Add\n")
 	//defer fmt.Printf("left Add\n")
+	h.Lock()
+	defer h.Unlock()
 
 	// generate random level
 	curlevel := uint64(math.Floor(-math.Log(rand.Float64() * h.LevelMult)))
@@ -301,24 +305,24 @@ func (h *Hnsw) Add(q framework.Point) uint64 {
 		}
 	}
 
-	h.Lock()
+	//h.Lock()
 	// Add it and increase slice length if neccessary
 	h.Nodes[indexForNewNode] = newNode
-	h.Unlock()
+	//h.Unlock()
 
 	// now add connections to newNode from newNodes neighbours (makes it visible in the graph)
 	for level := min(curlevel, currentMaxLayer); level < math.MaxUint64; level-- { // note: level intentionally overflows/wraps here
 		for _, n := range newNode.Friends[level].Nodes {
-			h.Link(h.Nodes[n], indexForNewNode, level)
+			h.link(h.Nodes[n], indexForNewNode, level)
 		}
 	}
 
-	h.Lock()
+	//h.Lock()
 	if curlevel > h.MaxLayer {
 		h.MaxLayer = curlevel
 		h.Enterpoint = indexForNewNode
 	}
-	h.Unlock()
+	//h.Unlock()
 
 	return indexForNewNode
 }
@@ -418,10 +422,13 @@ func (h *Hnsw) Search(q framework.Point, ef uint64, K uint64) *distqueue.DistQue
 	//fmt.Printf("entered Search\n")
 	//defer fmt.Printf("left Search\n")
 
-	h.RLock()
+	h.Lock()
+	defer h.Unlock()
+
+	//h.RLock()
 	currentMaxLayer := h.MaxLayer
 	ep := &distqueue.Item{Node: h.Enterpoint, D: h.DistFunc(h.Nodes[h.Enterpoint].P, q)}
-	h.RUnlock()
+	//h.RUnlock()
 
 	resultSet := &distqueue.DistQueueClosestLast{Size: ef + 1}
 	// first pass, find best ep
