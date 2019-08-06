@@ -42,13 +42,22 @@ func (n *Node) FriendCountAtLevel(level uint64) uint64 {
 	return uint64(len(n.Friends[level].Nodes))
 }
 
-func (n *Node) AddReverseLink(other uint64, level uint64) {
+func (n *Node) createRevLinkMap(level uint64) {
 	if n.ReverseFriends[level] == nil {
 		n.ReverseFriends[level] = &LinkMap{
 			Nodes: make(map[uint64]bool),
 		}
 	}
+}
+
+func (n *Node) AddReverseLink(other uint64, level uint64) {
+	n.createRevLinkMap(level)
 	n.ReverseFriends[level].Nodes[other] = true
+}
+
+func (n *Node) RemoveReverseLink(other uint64, level uint64) {
+	n.createRevLinkMap(level)
+	delete(n.ReverseFriends[level].Nodes, other)
 }
 
 func (n *Node) UnlinkFromFriends(allnodes map[uint64]*Node) {
