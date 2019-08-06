@@ -61,7 +61,7 @@ func (h *Hnsw) Link(first *framework.Node, second uint64, level uint64) {
 				resultSet.Pop()
 			}
 			// js: cleanup old reverse links
-			for _, oldFriend := range first.Friends[level].Nodes[maxL:] {
+			for _, oldFriend := range first.Friends[level].Nodes {
 				h.Nodes[oldFriend].RemoveReverseLink(first.GetNodeId(), level)
 			}
 			// FRIENDS ARE STORED IN DISTANCE ORDER, closest at index 0
@@ -69,7 +69,7 @@ func (h *Hnsw) Link(first *framework.Node, second uint64, level uint64) {
 			for i := maxL - 1; i >= 0; i-- {
 				item := resultSet.Pop()
 				first.Friends[level].Nodes[i] = item.Node
-				h.Nodes[item.Node].AddReverseLink(first.GetNodeId(), level) // really needed?
+				h.Nodes[item.Node].AddReverseLink(first.GetNodeId(), level)
 			}
 
 			// HERE
@@ -84,7 +84,7 @@ func (h *Hnsw) Link(first *framework.Node, second uint64, level uint64) {
 			h.getNeighborsByHeuristicClosestFirst(resultSet, maxL)
 
 			// js: cleanup old reverse links
-			for _, oldFriend := range first.Friends[level].Nodes[maxL:] {
+			for _, oldFriend := range first.Friends[level].Nodes {
 				h.Nodes[oldFriend].RemoveReverseLink(first.GetNodeId(), level)
 			}
 			// FRIENDS ARE STORED IN DISTANCE ORDER, closest at index 0
@@ -92,7 +92,7 @@ func (h *Hnsw) Link(first *framework.Node, second uint64, level uint64) {
 			for i := uint64(0); i < maxL; i++ {
 				item := resultSet.Pop()
 				first.Friends[level].Nodes[i] = item.Node
-				h.Nodes[item.Node].AddReverseLink(first.GetNodeId(), level) // really needed?
+				h.Nodes[item.Node].AddReverseLink(first.GetNodeId(), level)
 			}
 
 			// HERE
