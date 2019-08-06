@@ -18,7 +18,7 @@ const (
 )
 
 type Hnsw struct {
-	sync.Mutex
+	sync.RWMutex
 	framework.Hnsw
 
 	DistFunc func([]float32, []float32) float32
@@ -206,8 +206,9 @@ func New(M uint64, efConstruction uint64, first framework.Point) *Hnsw {
 }
 
 func (h *Hnsw) Stats() string {
-	h.Lock()
-	defer h.Unlock()
+	h.RLock()
+	defer h.RUnlock()
+
 	s := "HNSW Index\n"
 	s = s + fmt.Sprintf("M: %v, efConstruction: %v\n", h.M, h.EfConstruction)
 	s = s + fmt.Sprintf("DelaunayType: %v\n", h.DelaunayType)
@@ -422,19 +423,16 @@ func (h *Hnsw) Search(q framework.Point, ef uint64, K uint64) *distqueue.DistQue
 	//fmt.Printf("entered Search\n")
 	//defer fmt.Printf("left Search\n")
 
-	h.Lock()
-	defer h.Unlock()
-
-	//h.RLock()
+	h.RLock()
 	currentMaxLayer := h.MaxLayer
 	ep := &distqueue.Item{Node: h.Enterpoint, D: h.DistFunc(h.Nodes[h.Enterpoint].P, q)}
-	//h.RUnlock()
 
 	resultSet := &distqueue.DistQueueClosestLast{Size: ef + 1}
 	// first pass, find best ep
 	ep = h.findBestEnterPoint(ep, q, 0, currentMaxLayer)
 
 	h.searchAtLayer(q, resultSet, ef, ep, 0)
+	h.RUnlock()
 
 	for resultSet.Len() > K {
 		resultSet.Pop()
