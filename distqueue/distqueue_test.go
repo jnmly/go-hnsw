@@ -33,7 +33,6 @@ func TestQueue(t *testing.T) {
 
 	pq2 := &DistQueue{ClosestLast: true}
 	l = 1.0
-	pq2.Init()
 	for i := 0; i < 10; i++ {
 		pq2.Push(uint64(i), float32(rand.Float64()))
 	}

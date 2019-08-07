@@ -6,16 +6,14 @@ type Item struct {
 }
 
 type DistQueue struct {
-	initiated   bool
 	items       []*Item
 	Size        uint64
 	ClosestLast bool
 }
 
-func (pq *DistQueue) Init() *DistQueue {
+func (pq *DistQueue) init() *DistQueue {
 	pq.items = make([]*Item, 1, pq.Size+1)
 	pq.items[0] = nil // Heap queue first element should always be nil
-	pq.initiated = true
 	return pq
 }
 
@@ -25,8 +23,8 @@ func (pq *DistQueue) Reset() {
 
 // Push the value item into the priority queue with provided priority.
 func (pq *DistQueue) Push(id uint64, d float32) *Item {
-	if !pq.initiated {
-		pq.Init()
+	if pq.items == nil {
+		pq.init()
 	}
 	item := &Item{Node: id, D: d}
 	pq.items = append(pq.items, item)
@@ -35,8 +33,8 @@ func (pq *DistQueue) Push(id uint64, d float32) *Item {
 }
 
 func (pq *DistQueue) PushItem(item *Item) {
-	if !pq.initiated {
-		pq.Init()
+	if pq.items == nil {
+		pq.init()
 	}
 	pq.items = append(pq.items, item)
 	pq.swim(len(pq.items) - 1)
@@ -55,8 +53,8 @@ func (pq *DistQueue) Pop() *Item {
 
 // PopAndPush pops the top element and adds a new to the heap in one operation which is faster than two seperate calls to Pop and Push
 func (pq *DistQueue) PopAndPush(id uint64, d float32) *Item {
-	if !pq.initiated {
-		pq.Init()
+	if pq.items == nil {
+		pq.init()
 	}
 	item := &Item{Node: id, D: d}
 	pq.items[1] = item
