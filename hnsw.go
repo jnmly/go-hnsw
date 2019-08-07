@@ -81,7 +81,7 @@ func (h *Hnsw) link(first *framework.Node, second uint64, level uint64) {
 			for _, n := range first.Friends[level].Nodes {
 				resultSet.Push(n, h.DistFunc(first.P, h.Nodes[n].P))
 			}
-			h.getNeighborsByHeuristicClosestFirst(resultSet, maxL)
+			h.getNeighborsByHeuristic(resultSet, maxL, false)
 
 			// js: cleanup old reverse links
 			for _, oldFriend := range first.Friends[level].Nodes {
@@ -101,57 +101,30 @@ func (h *Hnsw) link(first *framework.Node, second uint64, level uint64) {
 	//first.Unlock()
 }
 
-func (h *Hnsw) getNeighborsByHeuristicClosestLast(resultSet1 *distqueue.DistQueue, M uint64) {
-	//fmt.Printf("entered getNeighborsByHeuristicClosestLast\n")
-	//defer fmt.Printf("left getNeighborsByHeuristicClosestLast\n")
-	if resultSet1.Len() <= M {
-		return
-	}
-	resultSet := &distqueue.DistQueue{Size: resultSet1.Len()}
-	tempList := &distqueue.DistQueue{Size: resultSet1.Len()}
-	result := make([]*distqueue.Item, 0, M)
-	for resultSet1.Len() > 0 {
-		resultSet.PushItem(resultSet1.Pop())
-	}
-	for resultSet.Len() > 0 {
-		if uint64(len(result)) >= M {
-			break
-		}
-		e := resultSet.Pop()
-		good := true
-		for _, r := range result {
-			if h.DistFunc(h.Nodes[r.Node].P, h.Nodes[e.Node].P) < e.D {
-				good = false
-				break
-			}
-		}
-		if good {
-			result = append(result, e)
-		} else {
-			tempList.PushItem(e)
-		}
-	}
-	for uint64(len(result)) < M && tempList.Len() > 0 {
-		result = append(result, tempList.Pop())
-	}
-	for _, item := range result {
-		resultSet1.PushItem(item)
-	}
-}
+func (h *Hnsw) getNeighborsByHeuristic(resultSet *distqueue.DistQueue, M uint64, last bool) {
+	//fmt.Printf("entered getNeighborsByHeuristic\n")
+	//defer fmt.Printf("left getNeighborsByHeuristic\n")
 
-func (h *Hnsw) getNeighborsByHeuristicClosestFirst(resultSet *distqueue.DistQueue, M uint64) {
-	//fmt.Printf("entered getNeighborsByHeuristicClosestFirst\n")
-	//defer fmt.Printf("left getNeighborsByHeuristicClosestFirst\n")
+	var workSet *distqueue.DistQueue
 	if resultSet.Len() <= M {
 		return
 	}
 	tempList := &distqueue.DistQueue{Size: resultSet.Len()}
 	result := make([]*distqueue.Item, 0, M)
-	for resultSet.Len() > 0 {
+	if last {
+		tmpResultSet := &distqueue.DistQueue{Size: resultSet.Len()}
+		for resultSet.Len() > 0 {
+			tmpResultSet.PushItem(resultSet.Pop())
+		}
+		workSet = tmpResultSet
+	} else {
+		workSet = resultSet
+	}
+	for workSet.Len() > 0 {
 		if uint64(len(result)) >= M {
 			break
 		}
-		e := resultSet.Pop()
+		e := workSet.Pop()
 		good := true
 		for _, r := range result {
 			if h.DistFunc(h.Nodes[r.Node].P, h.Nodes[e.Node].P) < e.D {
@@ -168,8 +141,9 @@ func (h *Hnsw) getNeighborsByHeuristicClosestFirst(resultSet *distqueue.DistQueu
 	for uint64(len(result)) < M && tempList.Len() > 0 {
 		result = append(result, tempList.Pop())
 	}
-	resultSet.Reset()
-
+	if !last {
+		resultSet.Reset()
+	}
 	for _, item := range result {
 		resultSet.PushItem(item)
 	}
@@ -294,7 +268,7 @@ func (h *Hnsw) Add(q framework.Point) uint64 {
 				resultSet.Pop()
 			}
 		case deluanayTypeHeuristic:
-			h.getNeighborsByHeuristicClosestLast(resultSet, h.M)
+			h.getNeighborsByHeuristic(resultSet, h.M, true)
 		}
 		newNode.AllocateFriendsUpTo(level, h.M) // js: potentially only needs to alloc this level
 		newNode.Friends[level].Nodes = make([]uint64, resultSet.Len())
