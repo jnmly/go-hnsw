@@ -251,7 +251,6 @@ func (h *Hnsw) Remove(indexToRemove uint64) {
 
 	hn := h.Nodes[indexToRemove]
 	delete(h.Nodes, indexToRemove)
-	//fmt.Printf("Removing id=%d\n", indexToRemove)
 
 	hn.UnlinkFromFriends(h.Nodes)
 
