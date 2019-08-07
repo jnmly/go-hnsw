@@ -38,3 +38,17 @@ func (h *Hnsw) Stats() string {
 	s = s + fmt.Sprintf("Memory use for index: %v (avg %v bytes / point)\n", memoryUseIndex, memoryUseIndex/uint64(len(h.Nodes)))
 	return s
 }
+
+func min(a, b uint64) uint64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func max(a, b uint64) uint64 {
+	if a > b {
+		return a
+	}
+	return b
+}

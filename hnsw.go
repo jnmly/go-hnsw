@@ -26,15 +26,10 @@ type Hnsw struct {
 }
 
 func (h *Hnsw) link(first *framework.Node, second uint64, level uint64) {
-	//fmt.Printf("entered link\n")
-	//defer fmt.Printf("left link\n")
-
 	maxL := h.M
 	if level == 0 {
 		maxL = h.M0
 	}
-
-	//first.Lock()
 
 	// check if we have allocated friends slices up to this level?
 	if first.FriendLevelCount() < level+1 {
@@ -71,8 +66,6 @@ func (h *Hnsw) link(first *framework.Node, second uint64, level uint64) {
 				h.Nodes[item.Node].AddReverseLink(first.GetNodeId(), level)
 			}
 
-			// HERE
-
 		case deluanayTypeHeuristic:
 
 			resultSet := &distqueue.DistQueue{Size: first.FriendCountAtLevel(level)}
@@ -93,17 +86,11 @@ func (h *Hnsw) link(first *framework.Node, second uint64, level uint64) {
 				first.Friends[level].Nodes[i] = item.Node
 				h.Nodes[item.Node].AddReverseLink(first.GetNodeId(), level)
 			}
-
-			// HERE
 		}
 	}
-	//first.Unlock()
 }
 
 func (h *Hnsw) getNeighborsByHeuristic(resultSet *distqueue.DistQueue, M uint64, last bool) {
-	//fmt.Printf("entered getNeighborsByHeuristic\n")
-	//defer fmt.Printf("left getNeighborsByHeuristic\n")
-
 	var workSet *distqueue.DistQueue
 	if resultSet.Len() <= M {
 		return
@@ -152,6 +139,7 @@ func New(M uint64, efConstruction uint64, first framework.Point) *Hnsw {
 
 	h := Hnsw{}
 	h.M = M
+
 	// default values used in c++ implementation
 	h.LevelMult = 1 / math.Log(float64(M))
 	h.EfConstruction = efConstruction
@@ -169,7 +157,6 @@ func New(M uint64, efConstruction uint64, first framework.Point) *Hnsw {
 	h.Nodes[0] = firstnode
 	h.Enterpoint = uint64(0)
 
-	// TODO: lock
 	h.CountLevel = make(map[uint64]uint64)
 	h.CountLevel[0] = 1
 	h.MaxLayer = 0
@@ -197,8 +184,6 @@ func (h *Hnsw) findBestEnterPoint(ep *distqueue.Item, q framework.Point, curleve
 }
 
 func (h *Hnsw) Add(q framework.Point) uint64 {
-	//fmt.Printf("entered Add\n")
-	//defer fmt.Printf("left Add\n")
 	h.Lock()
 	defer h.Unlock()
 
@@ -208,11 +193,9 @@ func (h *Hnsw) Add(q framework.Point) uint64 {
 	currentMaxLayer := h.Nodes[h.Enterpoint].Level
 	ep := &distqueue.Item{Node: h.Enterpoint, D: h.DistFunc(h.Nodes[h.Enterpoint].P, q)}
 
-	//newNode := &node.Node{P: q, Level: curlevel, Friends: make([][]*node.Node, min(curlevel, currentMaxLayer)+1))}
 	indexForNewNode := h.Sequence
 	h.Sequence++
 	newNode := framework.NewNode(q, curlevel, indexForNewNode)
-	// TODO: lock
 	h.CountLevel[curlevel]++
 
 	// first pass, find another ep if curlevel < maxLayer
@@ -244,10 +227,8 @@ func (h *Hnsw) Add(q framework.Point) uint64 {
 		}
 	}
 
-	//h.Lock()
 	// Add it and increase slice length if neccessary
 	h.Nodes[indexForNewNode] = newNode
-	//h.Unlock()
 
 	// now add connections to newNode from newNodes neighbours (makes it visible in the graph)
 	for level := min(curlevel, currentMaxLayer); level < math.MaxUint64; level-- { // note: level intentionally overflows/wraps here
@@ -256,20 +237,15 @@ func (h *Hnsw) Add(q framework.Point) uint64 {
 		}
 	}
 
-	//h.Lock()
 	if curlevel > h.MaxLayer {
 		h.MaxLayer = curlevel
 		h.Enterpoint = indexForNewNode
 	}
-	//h.Unlock()
 
 	return indexForNewNode
 }
 
 func (h *Hnsw) Remove(indexToRemove uint64) {
-	//fmt.Printf("entered Remove\n")
-	//defer fmt.Printf("left Remove\n")
-
 	h.Lock()
 	defer h.Unlock()
 
@@ -277,11 +253,8 @@ func (h *Hnsw) Remove(indexToRemove uint64) {
 	delete(h.Nodes, indexToRemove)
 	//fmt.Printf("Removing id=%d\n", indexToRemove)
 
-	// TODO: fix speedup, no need for array here
-
 	hn.UnlinkFromFriends(h.Nodes)
 
-	// TODO: lock
 	h.CountLevel[hn.Level]--
 
 	// Re-assign enterpoint
@@ -311,17 +284,11 @@ func (h *Hnsw) Remove(indexToRemove uint64) {
 }
 
 func (h *Hnsw) searchAtLayer(q framework.Point, resultSet *distqueue.DistQueue, efConstruction uint64, ep *distqueue.Item, level uint64) {
-
-	//fmt.Printf("entered searchAtLayer\n")
-	//defer fmt.Printf("left searchAtLayer\n")
-
 	var pool, visited = h.bitset.Get()
-	//visited := make(map[uint32]bool)
 
 	candidates := &distqueue.DistQueue{Size: efConstruction * 3}
 
 	visited.Set(uint(ep.Node))
-	//visited[ep.Node] = true
 	candidates.Push(ep.Node, ep.D)
 
 	resultSet.Push(ep.Node, ep.D)
@@ -358,14 +325,12 @@ func (h *Hnsw) searchAtLayer(q framework.Point, resultSet *distqueue.DistQueue, 
 }
 
 func (h *Hnsw) Search(q framework.Point, ef uint64, K uint64) *distqueue.DistQueue {
-	//fmt.Printf("entered Search\n")
-	//defer fmt.Printf("left Search\n")
-
 	h.RLock()
 	currentMaxLayer := h.MaxLayer
 	ep := &distqueue.Item{Node: h.Enterpoint, D: h.DistFunc(h.Nodes[h.Enterpoint].P, q)}
 
 	resultSet := &distqueue.DistQueue{Size: ef + 1, ClosestLast: true}
+
 	// first pass, find best ep
 	ep = h.findBestEnterPoint(ep, q, 0, currentMaxLayer)
 
@@ -376,18 +341,4 @@ func (h *Hnsw) Search(q framework.Point, ef uint64, K uint64) *distqueue.DistQue
 		resultSet.Pop()
 	}
 	return resultSet
-}
-
-func min(a, b uint64) uint64 {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func max(a, b uint64) uint64 {
-	if a > b {
-		return a
-	}
-	return b
 }
