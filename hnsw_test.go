@@ -302,3 +302,59 @@ func TestLocking(t *testing.T) {
 
 	wg.Wait()
 }
+
+func TestLocalMaximum(t *testing.T) {
+	t.SkipNow()
+	var zero framework.Point = make([]float32, 2)
+	h := New(3, 10, zero)
+
+	// the very-near point
+	h.Nodes[1] = &framework.Node{
+		P:              []float32{10.0, 10.0},
+		Level:          0,
+		Friends:        make(map[uint64]*framework.LinkList),
+		ReverseFriends: make(map[uint64]*framework.LinkMap),
+		Id:             1,
+	}
+
+	// the enter point
+	h.Nodes[2] = &framework.Node{
+		P:              []float32{5.0, 5.0},
+		Level:          0,
+		Friends:        make(map[uint64]*framework.LinkList),
+		ReverseFriends: make(map[uint64]*framework.LinkMap),
+		Id:             2,
+	}
+
+	// the detour
+	h.Nodes[3] = &framework.Node{
+		P: []float32{3.0, 3.0},
+		//P:              []float32{7.0, 7.0}, //works
+		Level:          0,
+		Friends:        make(map[uint64]*framework.LinkList),
+		ReverseFriends: make(map[uint64]*framework.LinkMap),
+		Id:             2,
+	}
+
+	h.MaxLayer = 1
+
+	for i := uint64(0); i < 2; i++ {
+		for j := uint64(0); j < 4; j++ {
+			h.Nodes[j].Friends[i] = &framework.LinkList{}
+			h.Nodes[j].Friends[i] = &framework.LinkList{}
+			h.Nodes[j].Friends[i] = &framework.LinkList{}
+		}
+	}
+
+	h.Nodes[1].Friends[0].Nodes = []uint64{3}
+	h.Nodes[2].Friends[0].Nodes = []uint64{3}
+	h.Nodes[3].Friends[0].Nodes = []uint64{1, 2}
+	h.Enterpoint = uint64(2)
+
+	{
+		queue := h.Search([]float32{11.0, 11.0}, 1, 1)
+		assert.Equal(t, uint64(1), queue.Len())
+		item := queue.Pop()
+		assert.Equal(t, uint64(1), item.Node)
+	}
+}
