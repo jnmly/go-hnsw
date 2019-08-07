@@ -22,15 +22,6 @@ func (pq *DistQueueClosestFirst) Reset() {
 	pq.items = pq.items[0:1]
 }
 
-func (pq *DistQueueClosestFirst) Reserve(n uint64) {
-	if n > pq.Len() {
-		// reserve memory by setting the slice capacity
-		items2 := make([]*Item, len(pq.items), n+1)
-		copy(pq.items, items2)
-		pq.items = items2
-	}
-}
-
 // Push the value item into the priority queue with provided priority.
 func (pq *DistQueueClosestFirst) Push(id uint64, d float32) *Item {
 	if !pq.initiated {
@@ -115,15 +106,6 @@ func (pq *DistQueueClosestLast) Init() *DistQueueClosestLast {
 	pq.items[0] = nil // Heap queue first element should always be nil
 	pq.initiated = true
 	return pq
-}
-
-func (pq *DistQueueClosestLast) Reserve(n uint64) {
-	if n > pq.Len() {
-		// reserve memory by setting the slice capacity
-		items2 := make([]*Item, len(pq.items), n+1)
-		copy(pq.items, items2)
-		pq.items = items2
-	}
 }
 
 // Push the value item into the priority queue with provided priority.

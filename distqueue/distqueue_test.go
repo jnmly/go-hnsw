@@ -34,7 +34,6 @@ func TestQueue(t *testing.T) {
 	pq2 := &DistQueueClosestLast{}
 	l = 1.0
 	pq2.Init()
-	pq2.Reserve(200) // try reserve
 	for i := 0; i < 10; i++ {
 		pq2.Push(uint64(i), float32(rand.Float64()))
 	}
@@ -52,7 +51,6 @@ func TestQueue(t *testing.T) {
 func TestKBest(t *testing.T) {
 
 	pq := &DistQueueClosestFirst{}
-	pq.Reserve(5) // reserve less than needed
 	for i := 0; i < 20; i++ {
 		pq.Push(uint64(i), rand.Float32())
 	}
