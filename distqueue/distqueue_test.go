@@ -1,10 +1,10 @@
 package distqueue
 
 import (
+	"math"
 	"math/rand"
 	"testing"
 
-	"github.com/jnmly/go-hnsw/node"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,7 +14,7 @@ func TestQueue(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		pq.Push(
-			node.NodeRef(i),
+			uint64(i),
 			float32(rand.Float64()))
 	}
 
@@ -36,7 +36,7 @@ func TestQueue(t *testing.T) {
 	pq2.Init()
 	pq2.Reserve(200) // try reserve
 	for i := 0; i < 10; i++ {
-		pq2.Push(node.NodeRef(i), float32(rand.Float64()))
+		pq2.Push(uint64(i), float32(rand.Float64()))
 	}
 	t.Log("Closest last, pop")
 	for !pq2.Empty() {
@@ -54,17 +54,17 @@ func TestKBest(t *testing.T) {
 	pq := &DistQueueClosestFirst{}
 	pq.Reserve(5) // reserve less than needed
 	for i := 0; i < 20; i++ {
-		pq.Push(node.NodeRef(i), rand.Float32())
+		pq.Push(uint64(i), rand.Float32())
 	}
 
 	// return K best matches, ordered as best first
 	t.Log("closest last, still return K best")
-	K := 10
+	K := uint64(10)
 	for pq.Len() > K {
 		pq.Pop()
 	}
 	res := make([]*Item, K)
-	for i := K - 1; i >= 0; i-- {
+	for i := K - 1; i < math.MaxUint64; i-- {
 		res[i] = pq.Pop()
 	}
 	for i := 0; i < len(res); i++ {
@@ -74,14 +74,14 @@ func TestKBest(t *testing.T) {
 
 func TestBasicOne(t *testing.T) {
 	pq := &DistQueueClosestFirst{}
-	pq.Push(node.NodeRef(0), float32(20))
-	pq.Push(node.NodeRef(1), float32(10))
-	pq.Push(node.NodeRef(2), float32(15))
-	for i := 1; i <= pq.Len(); i++ {
+	pq.Push(uint64(0), float32(20))
+	pq.Push(uint64(1), float32(10))
+	pq.Push(uint64(2), float32(15))
+	for i := uint64(1); i <= pq.Len(); i++ {
 		t.Logf("internal %d=%f", i, pq.items[i].D)
 	}
 	correct := []float32{10, 15, 20}
-	for i := 0; i < pq.Len(); i++ {
+	for i := uint64(0); i < pq.Len(); i++ {
 		x := pq.Pop()
 		t.Logf("popped %d %f", i, x.D)
 		assert.Equal(t, correct[i], x.D)
@@ -95,15 +95,15 @@ func TestBasicOne(t *testing.T) {
 
 func TestBasicTwo(t *testing.T) {
 	pq := &DistQueueClosestFirst{}
-	pq.Push(node.NodeRef(0), float32(20))
-	pq.Push(node.NodeRef(1), float32(10))
-	pq.Push(node.NodeRef(2), float32(15))
-	pq.Push(node.NodeRef(3), float32(5))
-	for i := 1; i <= pq.Len(); i++ {
+	pq.Push(uint64(0), float32(20))
+	pq.Push(uint64(1), float32(10))
+	pq.Push(uint64(2), float32(15))
+	pq.Push(uint64(3), float32(5))
+	for i := uint64(1); i <= pq.Len(); i++ {
 		t.Logf("internal %d=%f", i, pq.items[i].D)
 	}
 	correct := []float32{5, 10, 15, 20}
-	for i := 0; i < pq.Len(); i++ {
+	for i := uint64(0); i < pq.Len(); i++ {
 		x := pq.Pop()
 		t.Logf("popped %d %f", i, x.D)
 		assert.Equal(t, correct[i], x.D)
@@ -117,20 +117,20 @@ func TestBasicTwo(t *testing.T) {
 
 func TestBasicThree(t *testing.T) {
 	pq := &DistQueueClosestFirst{}
-	pq.Push(node.NodeRef(0), float32(20))
-	pq.Push(node.NodeRef(1), float32(10))
-	pq.Push(node.NodeRef(2), float32(15))
-	pq.Push(node.NodeRef(3), float32(5))
-	pq.Push(node.NodeRef(4), float32(45))
-	pq.Push(node.NodeRef(5), float32(75))
-	pq.Push(node.NodeRef(6), float32(85))
-	pq.Push(node.NodeRef(7), float32(95))
-	pq.Push(node.NodeRef(8), float32(30))
-	for i := 1; i <= pq.Len(); i++ {
+	pq.Push(uint64(0), float32(20))
+	pq.Push(uint64(1), float32(10))
+	pq.Push(uint64(2), float32(15))
+	pq.Push(uint64(3), float32(5))
+	pq.Push(uint64(4), float32(45))
+	pq.Push(uint64(5), float32(75))
+	pq.Push(uint64(6), float32(85))
+	pq.Push(uint64(7), float32(95))
+	pq.Push(uint64(8), float32(30))
+	for i := uint64(1); i <= pq.Len(); i++ {
 		t.Logf("internal %d=%f", i, pq.items[i].D)
 	}
 	correct := []float32{5, 10, 15, 20, 30, 45, 75, 85, 95}
-	for i := 0; i < pq.Len(); i++ {
+	for i := uint64(0); i < pq.Len(); i++ {
 		x := pq.Pop()
 		t.Logf("popped %d %f", i, x.D)
 		assert.Equal(t, correct[i], x.D)
