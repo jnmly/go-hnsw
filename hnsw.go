@@ -52,7 +52,7 @@ func (h *Hnsw) link(first *framework.Node, second uint64, level uint64) {
 
 		switch h.DelaunayType {
 		case deluanayTypeSimple:
-			resultSet := &distqueue.DistQueueClosestLast{Size: first.FriendCountAtLevel(level)}
+			resultSet := &distqueue.DistQueue{Size: first.FriendCountAtLevel(level), ClosestLast: true}
 
 			for _, n := range first.Friends[level].Nodes {
 				resultSet.Push(n, h.DistFunc(first.P, h.Nodes[n].P))
@@ -76,7 +76,7 @@ func (h *Hnsw) link(first *framework.Node, second uint64, level uint64) {
 
 		case deluanayTypeHeuristic:
 
-			resultSet := &distqueue.DistQueueClosestFirst{Size: first.FriendCountAtLevel(level)}
+			resultSet := &distqueue.DistQueue{Size: first.FriendCountAtLevel(level)}
 
 			for _, n := range first.Friends[level].Nodes {
 				resultSet.Push(n, h.DistFunc(first.P, h.Nodes[n].P))
@@ -101,14 +101,14 @@ func (h *Hnsw) link(first *framework.Node, second uint64, level uint64) {
 	//first.Unlock()
 }
 
-func (h *Hnsw) getNeighborsByHeuristicClosestLast(resultSet1 *distqueue.DistQueueClosestLast, M uint64) {
+func (h *Hnsw) getNeighborsByHeuristicClosestLast(resultSet1 *distqueue.DistQueue, M uint64) {
 	//fmt.Printf("entered getNeighborsByHeuristicClosestLast\n")
 	//defer fmt.Printf("left getNeighborsByHeuristicClosestLast\n")
 	if resultSet1.Len() <= M {
 		return
 	}
-	resultSet := &distqueue.DistQueueClosestFirst{Size: resultSet1.Len()}
-	tempList := &distqueue.DistQueueClosestFirst{Size: resultSet1.Len()}
+	resultSet := &distqueue.DistQueue{Size: resultSet1.Len()}
+	tempList := &distqueue.DistQueue{Size: resultSet1.Len()}
 	result := make([]*distqueue.Item, 0, M)
 	for resultSet1.Len() > 0 {
 		resultSet.PushItem(resultSet1.Pop())
@@ -139,13 +139,13 @@ func (h *Hnsw) getNeighborsByHeuristicClosestLast(resultSet1 *distqueue.DistQueu
 	}
 }
 
-func (h *Hnsw) getNeighborsByHeuristicClosestFirst(resultSet *distqueue.DistQueueClosestFirst, M uint64) {
+func (h *Hnsw) getNeighborsByHeuristicClosestFirst(resultSet *distqueue.DistQueue, M uint64) {
 	//fmt.Printf("entered getNeighborsByHeuristicClosestFirst\n")
 	//defer fmt.Printf("left getNeighborsByHeuristicClosestFirst\n")
 	if resultSet.Len() <= M {
 		return
 	}
-	tempList := &distqueue.DistQueueClosestFirst{Size: resultSet.Len()}
+	tempList := &distqueue.DistQueue{Size: resultSet.Len()}
 	result := make([]*distqueue.Item, 0, M)
 	for resultSet.Len() > 0 {
 		if uint64(len(result)) >= M {
@@ -285,7 +285,7 @@ func (h *Hnsw) Add(q framework.Point) uint64 {
 	// create new connections in every layer
 	for level := min(curlevel, currentMaxLayer); level < math.MaxUint64; level-- { // note: level intentionally overflows/wraps here
 
-		resultSet := &distqueue.DistQueueClosestLast{}
+		resultSet := &distqueue.DistQueue{ClosestLast: true}
 		h.searchAtLayer(q, resultSet, h.EfConstruction, ep, level)
 		switch h.DelaunayType {
 		case deluanayTypeSimple:
@@ -372,7 +372,7 @@ func (h *Hnsw) Remove(indexToRemove uint64) {
 	}
 }
 
-func (h *Hnsw) searchAtLayer(q framework.Point, resultSet *distqueue.DistQueueClosestLast, efConstruction uint64, ep *distqueue.Item, level uint64) {
+func (h *Hnsw) searchAtLayer(q framework.Point, resultSet *distqueue.DistQueue, efConstruction uint64, ep *distqueue.Item, level uint64) {
 
 	//fmt.Printf("entered searchAtLayer\n")
 	//defer fmt.Printf("left searchAtLayer\n")
@@ -380,7 +380,7 @@ func (h *Hnsw) searchAtLayer(q framework.Point, resultSet *distqueue.DistQueueCl
 	var pool, visited = h.bitset.Get()
 	//visited := make(map[uint32]bool)
 
-	candidates := &distqueue.DistQueueClosestFirst{Size: efConstruction * 3}
+	candidates := &distqueue.DistQueue{Size: efConstruction * 3}
 
 	visited.Set(uint(ep.Node))
 	//visited[ep.Node] = true
@@ -419,7 +419,7 @@ func (h *Hnsw) searchAtLayer(q framework.Point, resultSet *distqueue.DistQueueCl
 	h.bitset.Free(pool)
 }
 
-func (h *Hnsw) Search(q framework.Point, ef uint64, K uint64) *distqueue.DistQueueClosestLast {
+func (h *Hnsw) Search(q framework.Point, ef uint64, K uint64) *distqueue.DistQueue {
 	//fmt.Printf("entered Search\n")
 	//defer fmt.Printf("left Search\n")
 
@@ -427,7 +427,7 @@ func (h *Hnsw) Search(q framework.Point, ef uint64, K uint64) *distqueue.DistQue
 	currentMaxLayer := h.MaxLayer
 	ep := &distqueue.Item{Node: h.Enterpoint, D: h.DistFunc(h.Nodes[h.Enterpoint].P, q)}
 
-	resultSet := &distqueue.DistQueueClosestLast{Size: ef + 1}
+	resultSet := &distqueue.DistQueue{Size: ef + 1, ClosestLast: true}
 	// first pass, find best ep
 	ep = h.findBestEnterPoint(ep, q, 0, currentMaxLayer)
 

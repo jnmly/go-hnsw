@@ -10,7 +10,7 @@ import (
 
 func TestQueue(t *testing.T) {
 
-	pq := &DistQueueClosestFirst{}
+	pq := &DistQueue{}
 
 	for i := 0; i < 10; i++ {
 		pq.Push(
@@ -31,7 +31,7 @@ func TestQueue(t *testing.T) {
 		t.Logf("%+v", item)
 	}
 
-	pq2 := &DistQueueClosestLast{}
+	pq2 := &DistQueue{ClosestLast: true}
 	l = 1.0
 	pq2.Init()
 	for i := 0; i < 10; i++ {
@@ -50,7 +50,7 @@ func TestQueue(t *testing.T) {
 
 func TestKBest(t *testing.T) {
 
-	pq := &DistQueueClosestFirst{}
+	pq := &DistQueue{}
 	for i := 0; i < 20; i++ {
 		pq.Push(uint64(i), rand.Float32())
 	}
@@ -71,7 +71,7 @@ func TestKBest(t *testing.T) {
 }
 
 func TestBasicOne(t *testing.T) {
-	pq := &DistQueueClosestFirst{}
+	pq := &DistQueue{}
 	pq.Push(uint64(0), float32(20))
 	pq.Push(uint64(1), float32(10))
 	pq.Push(uint64(2), float32(15))
@@ -92,7 +92,7 @@ func TestBasicOne(t *testing.T) {
 }
 
 func TestBasicTwo(t *testing.T) {
-	pq := &DistQueueClosestFirst{}
+	pq := &DistQueue{}
 	pq.Push(uint64(0), float32(20))
 	pq.Push(uint64(1), float32(10))
 	pq.Push(uint64(2), float32(15))
@@ -114,7 +114,7 @@ func TestBasicTwo(t *testing.T) {
 }
 
 func TestBasicThree(t *testing.T) {
-	pq := &DistQueueClosestFirst{}
+	pq := &DistQueue{}
 	pq.Push(uint64(0), float32(20))
 	pq.Push(uint64(1), float32(10))
 	pq.Push(uint64(2), float32(15))
