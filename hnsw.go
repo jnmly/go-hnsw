@@ -118,6 +118,11 @@ func (h *Hnsw) getNeighborsByHeuristic(resultSet *distqueue.DistQueue, M uint64,
 				break
 			}
 		}
+
+		// js: only create an edge from the to-be-inserted point A to the
+		// candidate-neighbour B if that edge is the shortest way to reach
+		// this neighbour node. i.e. there is no shorter edge between the
+		// B and any other neighbour.
 		if good {
 			result = append(result, e)
 		} else {
@@ -125,6 +130,8 @@ func (h *Hnsw) getNeighborsByHeuristic(resultSet *distqueue.DistQueue, M uint64,
 		}
 	}
 	for uint64(len(result)) < M && tempList.Len() > 0 {
+		// js: if we have not filled up enough neighbors, then include the
+		// semi-optimal ones anyway
 		result = append(result, tempList.Pop())
 	}
 	if !last {
